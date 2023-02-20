@@ -4,6 +4,25 @@
   
     
     <entry>
+      <title>如何使用IDA Remote Debugging</title>
+      <link href="/2023/02/20/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8idaremotedebugging/"/>
+      <url>/2023/02/20/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8idaremotedebugging/</url>
+      
+        <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="\assets\css\APlayer.min.css"><script src="\assets\js\APlayer.min.js" class="aplayer-secondary-script-marker"></script><h1 id="设置允许dbug">1、设置允许Dbug</h1><p><strong>在kalilinux.vmx文件中加入下面三行</strong>(这里各自的文件名可能不太相同 )debugStub.listen.guest64 = "TRUE" debugStub.hideBreakpoints= "TRUE"debugStub.listen.guest64.remote = "TRUE"</p><blockquote><p>这一步好像不一定需要 笔者最后是用Ubuntu实现的但是并没有添加以上三行</p></blockquote><h1 id="配置ubuntu">2、配置Ubuntu</h1><p>在ida安装的文件夹处找到<strong>linux_server64</strong>与<strong>linux_server</strong>（分别用于调试64位与32位）并移动到linux中（<strong>自己选个文件夹调试的文件与以上两个文件需要在同一个文件夹中</strong>）</p><blockquote><p><strong>记得用chmod 777 文件名将文件名的权限都进行修改</strong></p></blockquote><figure><img src="./image-20230220223443687.png"alt="image-20230220223443687" /><figcaption aria-hidden="true">image-20230220223443687</figcaption></figure><figure><img src="./492a258109598af894d5a9c9bb5f8aa.png"alt="492a258109598af894d5a9c9bb5f8aa" /><figcaptionaria-hidden="true">492a258109598af894d5a9c9bb5f8aa</figcaption></figure><h1 id="ida配置">3、ida配置</h1><p><strong>首先查看虚拟机的ip （可用ifconfig指令查看）</strong></p><blockquote><p>在IDA菜单中，选择“<strong>Debugger-&gt;Processoption</strong>s”，打开要调试的程序设置选项，在Application和Inputfile两项中输入kali中要<strong>调试的程序</strong>，在Directory中输入<strong>要调试的程序</strong>在kali中的目录，在Hostname中输入linux机器的IP地址，<strong>端口保持默认即可</strong>，密码写虚拟机设置的密码</p></blockquote><figure><img src="./屏幕截图%202023-02-20%20224215.jpg"alt="屏幕截图 2023-02-20 224215" /><figcaption aria-hidden="true">屏幕截图 2023-02-20 224215</figcaption></figure><p>然后就完成啦</p><figure><img src="./0467580ddf90be6d5448afb790cd1fc.png"alt="0467580ddf90be6d5448afb790cd1fc" /><figcaptionaria-hidden="true">0467580ddf90be6d5448afb790cd1fc</figcaption></figure>]]></content>
+      
+      
+      
+        <tags>
+            
+            <tag> linux相关 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>c++黑马程序员课程笔记</title>
       <link href="/2023/02/19/c-%E9%BB%91%E9%A9%AC%E7%A8%8B%E5%BA%8F%E5%91%98%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/"/>
       <url>/2023/02/19/c-%E9%BB%91%E9%A9%AC%E7%A8%8B%E5%BA%8F%E5%91%98%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0/</url>
