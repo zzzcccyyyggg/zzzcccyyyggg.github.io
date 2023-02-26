@@ -4,6 +4,25 @@
   
     
     <entry>
+      <title>如何安装pycallgraph</title>
+      <link href="/2023/02/26/%E5%A6%82%E4%BD%95%E5%AE%89%E8%A3%85pycallgraph/"/>
+      <url>/2023/02/26/%E5%A6%82%E4%BD%95%E5%AE%89%E8%A3%85pycallgraph/</url>
+      
+        <content type="html"><![CDATA[<link rel="stylesheet" class="aplayer-secondary-style-marker" href="\assets\css\APlayer.min.css"><script src="\assets\js\APlayer.min.js" class="aplayer-secondary-script-marker"></script><h1 id="解决pycallgraph-安装失败">解决pycallgraph 安装失败</h1><p>我的pycallgraph直接使用pip install 安装时会报如下错误：</p><figure><img src="./如何安装pycallgraph/image-20230226224828315.png"alt="image-20230226224828315" /><figcaption aria-hidden="true">image-20230226224828315</figcaption></figure><p>尝试问了ChatGPT，得到以下回复：</p><figure><img src="./如何安装pycallgraph/image-20230226224854491.png"alt="image-20230226224854491" /><figcaption aria-hidden="true">image-20230226224854491</figcaption></figure><p><strong>Google查证得到以下解决方法：</strong></p><blockquote><p>可能是setuptools版本过高</p><p>查看自己的版本</p></blockquote><figure><img src="./如何安装pycallgraph/image-20230226224934096.png"alt="image-20230226224934096" /><figcaption aria-hidden="true">image-20230226224934096</figcaption></figure><p><strong>降级</strong></p><figure><img src="./如何安装pycallgraph/image-20230226225043772.png"alt="image-20230226225043772" /><figcaption aria-hidden="true">image-20230226225043772</figcaption></figure><p><strong>再次安装及成功</strong></p>]]></content>
+      
+      
+      
+        <tags>
+            
+            <tag> 杂七杂八 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>操作系统笔记</title>
       <link href="/2023/02/23/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%AC%94%E8%AE%B0/"/>
       <url>/2023/02/23/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E7%AC%94%E8%AE%B0/</url>
