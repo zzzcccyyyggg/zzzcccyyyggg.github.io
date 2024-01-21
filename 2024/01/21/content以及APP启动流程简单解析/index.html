@@ -7,7 +7,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://yghde.cc/img/12.png">
 <meta property="article:published_time" content="2024-01-21T15:25:19.000Z">
-<meta property="article:modified_time" content="2024-01-21T15:26:46.104Z">
+<meta property="article:modified_time" content="2024-01-21T15:45:56.198Z">
 <meta property="article:author" content="cc&amp;yg">
 <meta property="article:tag" content="REVERSE">
 <meta name="twitter:card" content="summary">
@@ -57,7 +57,7 @@
   isHome: false,
   isHighlightShrink: true,
   isToc: true,
-  postUpdate: '2024-01-21 23:26:46'
+  postUpdate: '2024-01-21 23:45:56'
 }</script><noscript><style type="text/css">
   #nav {
     opacity: 1
@@ -171,7 +171,7 @@ window.addEventListener('load',()=> { preloader.endLoading() })
 if (true) {
   document.addEventListener('pjax:send', () => { preloader.initLoading() })
   document.addEventListener('pjax:complete', () => { preloader.endLoading() })
-}</script><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/newhead.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><hr><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a href="/" title="CC&amp;YG"><span class="site-name">CC&amp;YG</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav></header><main class="layout" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">content以及APP启动流程简单解析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-01-21T15:25:19.000Z" title="发表于 2024-01-21 23:25:19">2024-01-21</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-01-21T15:26:46.104Z" title="更新于 2024-01-21 23:26:46">2024-01-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="content以及APP启动流程简单解析"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div><article class="post-content" id="article-container"><h2 id="context">Context</h2>
+}</script><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/newhead.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><hr><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a href="/" title="CC&amp;YG"><span class="site-name">CC&amp;YG</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav></header><main class="layout" id="content-inner"><div id="post"><div id="post-info"><h1 class="post-title">content以及APP启动流程简单解析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-01-21T15:25:19.000Z" title="发表于 2024-01-21 23:25:19">2024-01-21</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-01-21T15:45:56.198Z" title="更新于 2024-01-21 23:45:56">2024-01-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="content以及APP启动流程简单解析"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div><article class="post-content" id="article-container"><h2 id="context">Context</h2>
 <p><strong>Android应用模型是基于组件的应用设计模式，组件的运行要有一个完整的Android工程环境</strong>，在正确完备的环境下，Activity、Service等组件才能正确运行，而context就是相关组件的“上下文”，也即组件所处的完备环境，Context在加载资源、启动Activity、获取系统服务、创建View等操作都要参与
 一个Activity就是一个Context，一个Service也是一个Context，用户和操作系统的每一次交互都可以被看做一个场景</p>
 <h3 id="context-1">Context</h3>
@@ -326,10 +326,7 @@ Manager、Package Manager 等。</p>
 </ol>
 <p>系统服务初始化完成后，Activity Manager 会启动 Launcher
 应用（即主屏幕），用户就可以看到主屏幕并与设备进行交互了。</p>
-<figure>
-<img src="./content%E4%BB%A5%E5%8F%8AAPP%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%AE%80%E5%8D%95%E8%A7%A3%E6%9E%90/image-20240121232610810.png" alt="image-20240121232610810">
-<figcaption aria-hidden="true">image-20240121232610810</figcaption>
-</figure>
+<p><img src="./image-20240121232610810.png"></p>
 <p>这里Zygote，SystemServer与ActivityManagerService是较为关键的概念</p>
 <p><strong>Zygote</strong></p>
 <p>zygote意为“受精卵“。Android是基于Linux系统的，而在Linux中，所有的进程都是由init进程直接或者是间接fork出来的，zygote进</p>
@@ -344,10 +341,7 @@ Activity Manager、Window Manager、Package Manager 等。</p>
 <li>ActivityManagerService，简称AMS，服务端对象，负责系统中所有Activity的生命周期。</li>
 <li>ActivityManagerService进行初始化的时机很明确，就是在SystemServer进程开启的时候，就会初始化ActivityManagerService。</li>
 </ul>
-<figure>
-<img src="./content%E4%BB%A5%E5%8F%8AAPP%E5%90%AF%E5%8A%A8%E6%B5%81%E7%A8%8B%E7%AE%80%E5%8D%95%E8%A7%A3%E6%9E%90/image-20240121232619914.png" alt="image-20240121232619914">
-<figcaption aria-hidden="true">image-20240121232619914</figcaption>
-</figure>
+<p><img src="./image-20240121232619914.png"></p>
 <h3 id="app启动流程-1">APP启动流程</h3>
 <ol type="1">
 <li><strong>点击 App 图标</strong>： 用户点击桌面上的 App
