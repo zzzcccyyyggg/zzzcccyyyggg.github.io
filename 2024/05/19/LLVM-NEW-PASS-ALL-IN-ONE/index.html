@@ -1,0 +1,1036 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/newhead.jpg">
+  <link rel="icon" href="/img/newhead.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="cc&amp;yg">
+  <meta name="keywords" content="英勇无畏、勇于牺牲、崇尚荣誉、怜悯弱者、诚实守信、谦卑礼貌、择善固执">
+  
+    <meta name="description" content="LLVM NEW PASS ALL IN ONE &#x3D;&#x3D;学习笔记&#x3D;&#x3D; LLVM 通过一系列的passes来优化IR文件，不同的Pass作用在IR文件不同粒度上，如Function，Module。而Pass中的操作分为两种， &#x3D;&#x3D;transformation&#x3D;&#x3D; 与 &#x3D;&#x3D;analysis&#x3D;&#x3D; ，分别用于转化IR文件与收集IR文件中的信息，而一系列的pass则合集则被称为&#x3D;&#x3D;pass pip">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LLVM_NEW_PASS_ALL_IN_ONE">
+<meta property="og:url" content="http://yghde.cc/2024/05/19/LLVM-NEW-PASS-ALL-IN-ONE/index.html">
+<meta property="og:site_name" content="CC&amp;YG">
+<meta property="og:description" content="LLVM NEW PASS ALL IN ONE &#x3D;&#x3D;学习笔记&#x3D;&#x3D; LLVM 通过一系列的passes来优化IR文件，不同的Pass作用在IR文件不同粒度上，如Function，Module。而Pass中的操作分为两种， &#x3D;&#x3D;transformation&#x3D;&#x3D; 与 &#x3D;&#x3D;analysis&#x3D;&#x3D; ，分别用于转化IR文件与收集IR文件中的信息，而一系列的pass则合集则被称为&#x3D;&#x3D;pass pip">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yghde.cc/img/22.png">
+<meta property="article:published_time" content="2024-05-19T15:51:32.000Z">
+<meta property="article:modified_time" content="2024-05-19T16:16:31.783Z">
+<meta property="article:author" content="cc&amp;yg">
+<meta property="article:tag" content="REVERSE">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://yghde.cc/img/22.png">
+  
+  
+  
+  <title>LLVM_NEW_PASS_ALL_IN_ONE - CC&amp;YG</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/macpanel.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yghde.cc","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-double-row-display@1.00/cardlistpost.min.css"/>
+<style>#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags:before {content:"\A";
+  white-space: pre;}#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags > .article-meta__separator{display:none}</style>
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.1.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ZzzCcc&#39;s BLOG</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default2.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="LLVM_NEW_PASS_ALL_IN_ONE"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-19 23:51" pubdate>
+          2024年5月19日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          48 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">LLVM_NEW_PASS_ALL_IN_ONE</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="llvm-new-pass-all-in-one">LLVM NEW PASS ALL IN ONE</h1>
+<p>==学习笔记==</p>
+<p>LLVM
+通过一系列的passes来优化IR文件，不同的Pass作用在IR文件不同粒度上，如Function，Module。而Pass中的操作分为两种，
+==transformation== 与 ==analysis==
+，分别用于转化IR文件与收集IR文件中的信息，而一系列的pass则合集则被称为==pass
+pipeline==，</p>
+<h2 id="llvm-compile-and-install">LLVM COMPILE AND INSTALL</h2>
+<p>这里在win11的wsl2下编译，环境为Ubuntu 22.04,参考
+https://llvm.org/docs/CMake.html</p>
+<p>浅克隆LLVM，不然我克隆不下来</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">git <span class="hljs-built_in">clone</span> --depth 1 -b release/16.x https://github.com/llvm/llvm-project.git<br><span class="hljs-built_in">mkdir</span> build<br></code></pre></td></tr></table></figure>
+<p>编译命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">cmake -G Ninja -DLLVM_ENABLE_PROJECTS=<span class="hljs-string">&quot;clang;lld&quot;</span> -DLLVM_TARGETS_TO_BUILD=<span class="hljs-string">&quot;X86;ARM;AArch64&quot;</span> -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_TESTS=OFF -DLLVM_ENABLE_RTTI=ON -DLLVM_OBFUSCATION_LINK_INTO_TOOLS=<br>ON -DCMAKE_INSTALL_PREFIX=./build/ ../llvm-project/llvm<br></code></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">ninja -j4<br></code></pre></td></tr></table></figure>
+<p>这里可能会由于内存不足报错</p>
+<p>可以在<code>C:\Users\&lt;UserName&gt;</code>下创建<code>.wslconfig</code></p>
+<p>文件内容如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs .wslconfig">[wsl2]<br>memory=12GB<br></code></pre></td></tr></table></figure>
+<p>这里内存根据自身电脑内存调整，我的windows主机的内存是16GB</p>
+<p>接着执行</p>
+<figure class="highlight ada"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ada">wsl <span class="hljs-comment">--shutdown </span><br></code></pre></td></tr></table></figure>
+<p>对wsl进行重启，若是报错重启windows即可</p>
+<p>编译完成后使用以下命令完成安装</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">ninja install<br></code></pre></td></tr></table></figure>
+<p>这里最好还是安装一下，不然没有<code>LLVMConfig.cmake</code>此文件，无法在<code>CMakeLists.txt</code>中使用<code>find_package()</code></p>
+<p>安装成功，可以看到安装位置为前面预设的位置</p>
+<figure>
+<img src="./image-20240519223934990.png" srcset="/img/loading.gif" lazyload
+alt="image-20240519223934990" />
+<figcaption aria-hidden="true">image-20240519223934990</figcaption>
+</figure>
+<p>接下来对编译命令中出现的各项进行解释</p>
+<blockquote>
+<p><code>-G Ninja</code>：指定生成构建文件的系统为 Ninja。</p>
+<p><code>-DLLVM_ENABLE_PROJECTS="clang;lld"</code>：设置了要构建的 LLVM
+子项目。</p>
+<p><code>-DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64 "</code>：这指定了构建
+LLVM 时要支持的目标架构。</p>
+<p><code>-DCMAKE_BUILD_TYPE=Release</code>：设置构建类型为
+Release，意味着生成的构建将会进行优化，需要调试的话选择Debug，但是编译会慢很多，也需要更大的内存</p>
+<p><code>-DLLVM_INCLUDE_TESTS=OFF</code>：此选项关闭了测试的构建。这样做可以减少构建时间和输出的大小。</p>
+<p><code>-DLLVM_ENABLE_RTTI=ON</code>：这开启了运行时类型信息（Run-Time
+Type Information，RTTI）。RTTI 允许在运行时识别对象的类型。</p>
+<p><code>../llvm-project/llvm</code>：这指定了源代码目录的路径。CMake
+会在这个目录下查找 <code>CMakeLists.txt</code>
+文件来确定如何构建项目。</p>
+<p><code>-DCMAKE_INSTALL_PREFIX</code>指定了安装的位置</p>
+</blockquote>
+<p>重点讲下<code>-DLLVM_OBFUSCATION_LINK_INTO_TOOLS=ON</code>，这个选项与New
+Pass 相适配，**设置
+LLVM_${NAME}_LINK_INTO_TOOLS**，可以将项目转变为静态链接的扩展。这意味着
+pass 插件将直接被链接到 LLVM
+工具中，而不是作为动态库在运行时加载。（这东西翻了我好久
+google上的实现方案都又老又臭 没想到官方已经适配了
+不认真读文档的后果www）</p>
+<h2 id="the-llvm-pass-manager">The LLVM pass manager</h2>
+<p>为了提升框架的灵活程度，LLVM将源文件-&gt;可执行文件的步骤打碎，分为不同的Passes</p>
+<figure>
+<img src="./image-20240519213244315.png" srcset="/img/loading.gif" lazyload
+alt="image-20240519213244315" />
+<figcaption aria-hidden="true">image-20240519213244315</figcaption>
+</figure>
+<p>而控制这些Passes正确运行的，就是Pass Manager</p>
+<p>Pass 往往按照其工作范围分为以下几类：</p>
+<p>在 LLVM 中，一个 pass 通常根据其作用的范围来分类：</p>
+<h3 id="module-pass">Module Pass</h3>
+<p><strong>模块 pass</strong>
+以整个模块为输入。它在给定模块上执行其工作，可以用于模块内的过程间操作。由于它处理的是整个模块，模块
+pass
+可以访问和修改模块中的所有函数和全局变量。这使得它特别适合那些需要跨多个函数进行分析或优化的任务。例如，全局常量传播和内联（inlining）优化可以通过模块
+pass 来实现。</p>
+<h3 id="call-graph-pass">Call Graph Pass</h3>
+<p><strong>调用图 pass</strong>
+操作的是调用图的强连通分量（SCCs）。调用图是一个图结构，其中节点表示函数，边表示函数之间的调用关系。SCC
+是图中所有节点互相可达的最大子图。调用图 pass
+从底向上遍历这些组件，即从被调用函数开始，逐步向上处理调用它们的函数。这种
+pass
+特别适合于分析和优化函数间的调用关系，例如函数内联优化或递归调用的优化。</p>
+<h3 id="function-pass">Function Pass</h3>
+<p><strong>函数 pass</strong>
+以单个函数为输入，只对该函数进行操作。它在函数的级别上执行分析或转换，不涉及其他函数。这使得函数
+pass
+简单且高效，因为它只需要处理一个函数的代码，而无需考虑模块中其他部分的状态。典型的函数
+pass 例子包括死代码消除（DCE）、常量传播（constant
+propagation）和循环优化（loop optimization）。</p>
+<h3 id="loop-pass">Loop Pass</h3>
+<p><strong>循环 pass</strong>
+作用于函数内的循环。它只处理特定循环的内容，进行针对性的优化和转换。例如，循环展开（loop
+unrolling）、循环分割（loop splitting）和循环向量化（loop
+vectorization）等优化可以通过循环 pass 实现。循环 pass
+需要详细分析和优化循环结构，并且通常只关注单个循环的特性，而不涉及函数的其他部分。</p>
+<p>在 LLVM 中，除了操作 IR 代码外，一个 pass
+还可能需要获得、更新或丢弃部分或者全部的分析结果。有许多不同的分析，如果一个
+pass
+需要这些分析结果，它可以从分析管理器请求这些信息。如果信息已经计算好，则会返回缓存的结果。否则，会进行相应的计算。如果一个
+pass 改变了 IR
+代码，那么它需要声明哪些分析结果被保留，以便在必要时丢弃部分的缓存的分析信息。在底层，pass
+管理器确保以下几点：</p>
+<h3 id="分析结果在-pass-之间共享">分析结果在 pass 之间共享</h3>
+<p>分析结果在不同的 pass 之间共享。这需要跟踪每个 pass
+需要哪些分析以及每个分析的状态。其目标是避免不必要的分析预计算，并在可能的情况下尽快释放被分析结果占用的内存。这种机制可以提高编译器的效率，因为它减少了重复计算分析结果的开销。</p>
+<h3 id="pass-管理器的执行机制">pass 管理器的执行机制</h3>
+<p>pass 以流水线方式执行。例如，如果有几个函数 pass 应按顺序执行，pass
+管理器会在第一个函数上运行每个函数 pass，然后在第二个函数上运行所有函数
+pass，依此类推。这种方法的基本思想是通过在有限的数据集（一个 IR
+函数）上执行转换，然后移动到下一个有限的数据集，来改善缓存行为。</p>
+<h2 id="implementing-a-new-pass">Implementing a new pass</h2>
+<p>这里以一个插桩(<strong>instrumentation</strong>)Pass为例</p>
+<p>代码实现如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/ADT/Statistic.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/IR/Function.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/IR/PassManager.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Passes/PassBuilder.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Passes/PassPlugin.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Support/Debug.h&quot;</span></span><br><br><span class="hljs-keyword">using</span> <span class="hljs-keyword">namespace</span> llvm;<br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> DEBUG_TYPE <span class="hljs-string">&quot;ppprofiler&quot;</span></span><br><span class="hljs-comment">//LLVM的内置调试基础架构要求我们定义一个调试类型，它是一个字符串。此字符串稍后将显示在打印的统计信息中</span><br><br><span class="hljs-built_in">ALWAYS_ENABLED_STATISTIC</span>(<br>    NumOfFunc, <span class="hljs-string">&quot;Number of instrumented functions.&quot;</span>);<br><br><span class="hljs-keyword">namespace</span> &#123;<br><span class="hljs-comment">//在匿名空间内定义对应的Pass类，继承PassInfoMixin，run是其回调方法</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">PPProfilerIRPass</span><br>    : <span class="hljs-keyword">public</span> llvm::PassInfoMixin&lt;PPProfilerIRPass&gt; &#123;<br><span class="hljs-keyword">public</span>:<br>  <span class="hljs-function">llvm::PreservedAnalyses</span><br><span class="hljs-function">  <span class="hljs-title">run</span><span class="hljs-params">(llvm::Module &amp;M, llvm::ModuleAnalysisManager &amp;AM)</span></span>;<br><br><span class="hljs-keyword">private</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">instrument</span><span class="hljs-params">(llvm::Function &amp;F,</span></span><br><span class="hljs-params"><span class="hljs-function">                  llvm::Function *EnterFn,</span></span><br><span class="hljs-params"><span class="hljs-function">                  llvm::Function *ExitFn)</span></span>;<br>&#125;;<br>&#125; <span class="hljs-comment">// namespace</span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">PPProfilerIRPass::instrument</span><span class="hljs-params">(llvm::Function &amp;F,</span></span><br><span class="hljs-params"><span class="hljs-function">                                  Function *EnterFn,</span></span><br><span class="hljs-params"><span class="hljs-function">                                  Function *ExitFn)</span> </span>&#123;<br>  ++NumOfFunc;<br><br>  <span class="hljs-comment">// Set the insertion point to begin of first block.</span><br>  IRBuilder&lt;&gt; <span class="hljs-built_in">Builder</span>(&amp;*F.<span class="hljs-built_in">getEntryBlock</span>().<span class="hljs-built_in">begin</span>());<br><br>  <span class="hljs-comment">// Create global constant for the function name.</span><br>  GlobalVariable *FnName =<br>      Builder.<span class="hljs-built_in">CreateGlobalString</span>(F.<span class="hljs-built_in">getName</span>());<br><br>  <span class="hljs-comment">// Call the EnterFn at function entry.</span><br>  Builder.<span class="hljs-built_in">CreateCall</span>(EnterFn-&gt;<span class="hljs-built_in">getFunctionType</span>(), EnterFn,<br>                     &#123;FnName&#125;);<br><br>  <span class="hljs-comment">// Find all Ret instructions, and call ExitFn before.</span><br>  <span class="hljs-keyword">for</span> (BasicBlock &amp;BB : F) &#123;<br>    <span class="hljs-keyword">for</span> (Instruction &amp;Inst : BB) &#123;<br>      <span class="hljs-keyword">if</span> (Inst.<span class="hljs-built_in">getOpcode</span>() == Instruction::Ret) &#123;<br>        Builder.<span class="hljs-built_in">SetInsertPoint</span>(&amp;Inst);<br>        Builder.<span class="hljs-built_in">CreateCall</span>(ExitFn-&gt;<span class="hljs-built_in">getFunctionType</span>(),<br>                           ExitFn, &#123;FnName&#125;);<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br><br><span class="hljs-function">PreservedAnalyses</span><br><span class="hljs-function"><span class="hljs-title">PPProfilerIRPass::run</span><span class="hljs-params">(Module &amp;M,</span></span><br><span class="hljs-params"><span class="hljs-function">                      ModuleAnalysisManager &amp;AM)</span> </span>&#123;<br>  <span class="hljs-comment">// Do not instrument the runtime functions.</span><br>  <span class="hljs-comment">// 避免无线递归</span><br>  <span class="hljs-keyword">if</span> (M.<span class="hljs-built_in">getFunction</span>(<span class="hljs-string">&quot;__ppp_enter&quot;</span>) ||<br>      M.<span class="hljs-built_in">getFunction</span>(<span class="hljs-string">&quot;__ppp_exit&quot;</span>)) &#123;<br>    <span class="hljs-keyword">return</span> PreservedAnalyses::<span class="hljs-built_in">all</span>();<br>  &#125;<br><br>  <span class="hljs-comment">// Create the function type and functions.</span><br>  Type *VoidTy = Type::<span class="hljs-built_in">getVoidTy</span>(M.<span class="hljs-built_in">getContext</span>());<br>  PointerType *PtrTy =<br>      PointerType::<span class="hljs-built_in">getUnqual</span>(M.<span class="hljs-built_in">getContext</span>());<br>  FunctionType *EnterExitFty =<br>      FunctionType::<span class="hljs-built_in">get</span>(VoidTy, &#123;PtrTy&#125;, <span class="hljs-literal">false</span>);<br>  Function *EnterFn = Function::<span class="hljs-built_in">Create</span>(<br>      EnterExitFty, GlobalValue::ExternalLinkage,<br>      <span class="hljs-string">&quot;__ppp_enter&quot;</span>, M);<br>  Function *ExitFn = Function::<span class="hljs-built_in">Create</span>(<br>      EnterExitFty, GlobalValue::ExternalLinkage,<br>      <span class="hljs-string">&quot;__ppp_exit&quot;</span>, M);<br><br>  <span class="hljs-comment">// Call enter function.</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> &amp;F : M.<span class="hljs-built_in">functions</span>()) &#123;<br>    <span class="hljs-keyword">if</span> (!F.<span class="hljs-built_in">isDeclaration</span>() &amp;&amp; F.<span class="hljs-built_in">hasName</span>())<br>      <span class="hljs-built_in">instrument</span>(F, EnterFn, ExitFn);<br>  &#125;<br>  <span class="hljs-comment">// 当一个 LLVM pass 运行时，它可能会修改中间表示（IR），从而使某些之前的分析结果失效。</span><br>  <span class="hljs-comment">// 为了确保没有错误，代码示例中建议返回 PreservedAnalyses::none()，表示没有保留任何分析结果</span><br>  <span class="hljs-comment">// 这样做虽然比较保守（可能会导致重新计算一些分析结果），但可以保证安全性，因为不会依赖已经失效的分析结果。</span><br>  <span class="hljs-keyword">return</span> PreservedAnalyses::<span class="hljs-built_in">none</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">RegisterCB</span><span class="hljs-params">(PassBuilder &amp;PB)</span> </span>&#123;<br>  PB.<span class="hljs-built_in">registerPipelineParsingCallback</span>(<br>      [](StringRef Name, ModulePassManager &amp;MPM,<br>         ArrayRef&lt;PassBuilder::PipelineElement&gt;) &#123;<br>        <span class="hljs-keyword">if</span> (Name == <span class="hljs-string">&quot;ppprofiler&quot;</span>) &#123;<br>          MPM.<span class="hljs-built_in">addPass</span>(<span class="hljs-built_in">PPProfilerIRPass</span>());<br>          <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>      &#125;);<br>  PB.<span class="hljs-built_in">registerPipelineStartEPCallback</span>(<br>      [](ModulePassManager &amp;PM, OptimizationLevel Level) &#123;<br>        PM.<span class="hljs-built_in">addPass</span>(<span class="hljs-built_in">PPProfilerIRPass</span>());<br>      &#125;);<br>&#125;<br><br><span class="hljs-function">llvm::PassPluginLibraryInfo <span class="hljs-title">getPPProfilerPluginInfo</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-keyword">return</span> &#123;LLVM_PLUGIN_API_VERSION, <span class="hljs-string">&quot;PPProfiler&quot;</span>, <span class="hljs-string">&quot;v0.1&quot;</span>,<br>          RegisterCB&#125;;<br>&#125;<br><br><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> LLVM_PPPROFILER_LINK_INTO_TOOLS</span><br><span class="hljs-keyword">extern</span> <span class="hljs-string">&quot;C&quot;</span> LLVM_ATTRIBUTE_WEAK ::<span class="hljs-function">llvm::PassPluginLibraryInfo</span><br><span class="hljs-function"><span class="hljs-title">llvmGetPassPluginInfo</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-keyword">return</span> <span class="hljs-built_in">getPPProfilerPluginInfo</span>();<br>&#125;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+<p>有两种方式可以将我们的Pass通过Passbuilder注册，静态注册与动态注册，静态链接需要提供<strong>get<Plugin-Name>PluginInfo()</strong>函数，而动态链接需要提供<strong>llvmGetPassPluginInfo()</strong>
+，详情参考代码</p>
+<h2 id="adding-the-pass-to-the-llvm-source-tree">Adding the pass to the
+LLVM source tree</h2>
+<h3
+id="utilizing-the-plugin-mechanisms-inside-the-llvm-source-tree"><strong>Utilizing
+the plugin mechanisms inside the LLVM source tree</strong></h3>
+<h4 id="创建新的插件目录和源文件">1. 创建新的插件目录和源文件</h4>
+<p>首先，你需要在 LLVM
+源代码树中创建一个新的目录，并将插件源文件放入其中。</p>
+<ul>
+<li>在 <code>llvm-project/llvm/lib/Transforms</code> 目录下创建一个名为
+<code>PPProfiler</code> 的新目录。</li>
+<li>将 <code>PPProfiler.cpp</code> 文件复制到这个新目录中。</li>
+</ul>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-built_in">mkdir</span> llvm-project/llvm/lib/Transforms/PPProfiler<br><span class="hljs-built_in">cp</span> path/to/PPProfiler.cpp llvm-project/llvm/lib/Transforms/PPProfiler/<br></code></pre></td></tr></table></figure>
+<h4 id="创建-cmake-配置文件">2. 创建 CMake 配置文件</h4>
+<p>在 <code>PPProfiler</code> 目录中创建一个名为
+<code>CMakeLists.txt</code> 的文件，内容如下：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cmake">add_llvm_pass_plugin(PPProfiler PPProfiler.cpp)<br></code></pre></td></tr></table></figure>
+<h4 id="修改上级目录的-cmakelists.txt-文件">3. 修改上级目录的
+CMakeLists.txt 文件</h4>
+<p>在 <code>PPProfiler</code> 目录的上一级目录（即
+<code>llvm-project/llvm/lib/Transforms</code>）的
+<code>CMakeLists.txt</code> 文件中，添加一行以包含新创建的
+<code>PPProfiler</code> 目录：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cmake"><span class="hljs-keyword">add_subdirectory</span>(PPProfiler)<br></code></pre></td></tr></table></figure>
+<h4 id="构建并安装-llvm">4. 构建并安装 LLVM</h4>
+<p>进入 LLVM 的构建目录，并运行 <code>ninja install</code>
+命令来构建和安装 LLVM，同时包含新的 <code>PPProfiler</code> 插件。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-built_in">cd</span> path/to/llvm/build<br>ninja install<br></code></pre></td></tr></table></figure>
+<p>在运行 <code>ninja install</code> 期间，CMake
+会检测到构建描述文件的变化，并重新运行配置步骤。你会看到类似如下的输出：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">-- Registering PPProfiler as a pass plugin (static build: OFF)<br></code></pre></td></tr></table></figure>
+<p>这表示插件被检测到并已作为共享库构建。安装步骤完成后，你会在
+<code>&lt;install directory&gt;/lib</code> 目录中找到共享库
+<code>PPProfiler.so</code>。</p>
+<h4 id="静态链接插件">5. 静态链接插件</h4>
+<p>如果你希望将插件静态链接到 LLVM 工具中，需要重新运行 CMake
+配置，并添加 <code>-DLLVM_PPPROFILER_LINK_INTO_TOOLS=ON</code>
+选项：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-built_in">cd</span> path/to/llvm/build<br>cmake -DLLVM_PPPROFILER_LINK_INTO_TOOLS=ON ..<br>ninja install<br></code></pre></td></tr></table></figure>
+<p>在运行 <code>ninja install</code> 期间，CMake
+会再次检测到构建描述文件的变化，你会看到类似如下的输出：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">-- Registering PPProfiler as a pass plugin (static build: ON)<br></code></pre></td></tr></table></figure>
+<h4 id="检查静态链接的结果">6. 检查静态链接的结果</h4>
+<p>编译和安装 LLVM 后，以下变化将发生：</p>
+<ul>
+<li>插件被编译成静态库 <code>libPPProfiler.a</code>，并安装到
+<code>&lt;install directory&gt;/lib</code> 目录中。</li>
+<li>LLVM 工具（如 <code>opt</code>）将链接到该静态库。</li>
+<li>插件注册为扩展，你可以在
+<code>&lt;install directory&gt;/include/llvm/Support/Extension.def</code>
+文件中看到如下行：</li>
+</ul>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">HANDLE_EXTENSION(PPProfiler)<br></code></pre></td></tr></table></figure>
+<h3 id="fully-integrating-the-pass-into-the-pass-registry"><strong>Fully
+integrating the pass into the pass registry</strong></h3>
+<p>这段文字详细描述了如何将一个新的 LLVM pass 完全集成到 LLVM
+系统中，而不仅仅是作为一个插件。以下是详细的解释和逐步操作指南：</p>
+<h4 id="创建头文件">1. 创建头文件</h4>
+<p>首先，你需要在
+<code>llvm-project/llvm/include/llvm/Transforms/PPProfiler</code>
+目录下创建一个新的头文件 <code>PPProfiler.h</code>，并在其中定义 pass
+类。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> LLVM_TRANSFORMS_PPPROFILER_PPPROFILER_H</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> LLVM_TRANSFORMS_PPPROFILER_PPPROFILER_H</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/IR/PassManager.h&quot;</span></span><br><br><span class="hljs-keyword">namespace</span> llvm &#123;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">PPProfilerIRPass</span> : <span class="hljs-keyword">public</span> llvm::PassInfoMixin&lt;PPProfilerIRPass&gt; &#123;<br><span class="hljs-keyword">public</span>:<br>  <span class="hljs-function">llvm::PreservedAnalyses <span class="hljs-title">run</span><span class="hljs-params">(llvm::Module &amp;M, llvm::ModuleAnalysisManager &amp;AM)</span></span>;<br>  <br><span class="hljs-keyword">private</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">instrument</span><span class="hljs-params">(llvm::Function &amp;F, llvm::Function *EnterFn, llvm::Function *ExitFn)</span></span>;<br>&#125;;<br><br>&#125; <span class="hljs-comment">// namespace llvm</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+<h5 id="解释">解释：</h5>
+<ul>
+<li><strong><code>#ifndef</code> /
+<code>#define</code></strong>：防止头文件重复包含。</li>
+<li><strong><code>llvm</code> 命名空间</strong>：将类定义放在
+<code>llvm</code> 命名空间中。</li>
+<li><strong><code>PPProfilerIRPass</code> 类</strong>：定义了
+<code>run</code> 方法和 <code>instrument</code> 私有方法。</li>
+</ul>
+<h4 id="更新源文件">2. 更新源文件</h4>
+<p>将 <code>PPProfiler.cpp</code> 文件复制到
+<code>llvm-project/llvm/lib/Transforms/PPProfiler</code>
+目录中，并进行如下更新：</p>
+<ol type="1">
+<li>删除类定义，因为它现在已经在头文件中定义。</li>
+<li>添加头文件的 <code>#include</code> 指令。</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Transforms/PPProfiler/PPProfiler.h&quot;</span></span><br><br><span class="hljs-comment">// Implementation of the run method and other functions.</span><br></code></pre></td></tr></table></figure>
+<h4 id="更新-cmake-配置文件">3. 更新 CMake 配置文件</h4>
+<p>在 <code>llvm-project/llvm/lib/Transforms/PPProfiler</code>
+目录中创建一个新的 <code>CMakeLists.txt</code> 文件，内容如下：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs cmake">add_llvm_component_library(LLVMPPProfiler<br>  PPProfiler.cpp<br>  LINK_COMPONENTS<br>  Core<br>  Support<br>)<br></code></pre></td></tr></table></figure>
+<h5 id="解释-1">解释：</h5>
+<ul>
+<li><strong><code>add_llvm_component_library</code></strong>：声明一个新的
+LLVM 组件库。</li>
+<li><strong><code>LLVMPPProfiler</code></strong>：新组件的名称。</li>
+<li><strong><code>PPProfiler.cpp</code></strong>：包含的源文件。</li>
+<li><strong><code>LINK_COMPONENTS</code></strong>：依赖的 LLVM
+组件。</li>
+</ul>
+<p>在 <code>llvm-project/llvm/lib/Transforms</code> 目录中的
+<code>CMakeLists.txt</code> 文件中，添加如下行以包含新的源目录：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cmake"><span class="hljs-keyword">add_subdirectory</span>(PPProfiler)<br></code></pre></td></tr></table></figure>
+<h4 id="更新">4. 更新</h4>
+<p>在 <code>llvm/lib/Passes/PassRegistry.def</code> 文件中，找到模块
+pass 定义部分（可以搜索 <code>MODULE_PASS</code>
+宏），并添加如下行：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-built_in">MODULE_PASS</span>(<span class="hljs-string">&quot;ppprofiler&quot;</span>, <span class="hljs-built_in">PPProfilerIRPass</span>())<br></code></pre></td></tr></table></figure>
+<h5 id="解释-2">解释：</h5>
+<ul>
+<li><strong><code>MODULE_PASS</code></strong>：宏定义模块级别的
+pass。</li>
+<li><strong><code>"ppprofiler"</code></strong>：pass 的名称。</li>
+<li><strong><code>PPProfilerIRPass()</code></strong>：pass
+类的实例。</li>
+</ul>
+<h4 id="更新-1">5. 更新</h4>
+<p>在 <code>llvm/lib/Passes/PassBuilder.cpp</code>
+文件中，包含新的头文件：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Transforms/PPProfiler/PPProfiler.h&quot;</span></span><br></code></pre></td></tr></table></figure>
+<h4 id="更新-cmakelists.txt-文件中的依赖">6. 更新 CMakeLists.txt
+文件中的依赖</h4>
+<p>在 <code>llvm/lib/Passes/CMakeLists.txt</code>
+文件中，添加对新组件的依赖：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs cmake">LINK_COMPONENTS<br>  ...<br>  PPProfiler<br></code></pre></td></tr></table></figure>
+<h4 id="构建和安装-llvm">7. 构建和安装 LLVM</h4>
+<p>进入 LLVM 的构建目录，并运行 <code>ninja install</code>
+命令来构建和安装包含新 pass 的 LLVM：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-built_in">cd</span> path/to/llvm/build<br>ninja install<br></code></pre></td></tr></table></figure>
+<h4 id="验证新-pass">8. 验证新 pass</h4>
+<p>通过前面的步骤，你已经将新的 <code>ppprofiler</code> pass 完全集成到
+LLVM 中。这个 pass 现在对所有 LLVM 工具都可用，并且已编译成
+<code>libLLVMPPProfiler.a</code> 库，可以作为 <code>PPProfiler</code>
+组件在构建系统中使用。</p>
+<h2 id="using-the-ppprofiler-pass-with-llvm-tools">Using the ppprofiler
+pass with LLVM tools</h2>
+<h3 id="run-the-pass-plugin-in-opt"><strong>Run the pass plugin in
+opt</strong></h3>
+<p>这段文字详细描述了如何使用 LLVM 工具链来加载和运行一个自定义
+pass，并如何通过运行时支持来记录函数进入和退出事件的简单实现。以下是详细解释和逐步操作指南：</p>
+<h4 id="使用-opt-工具运行-pass">1. 使用 <code>opt</code> 工具运行
+pass</h4>
+<p>首先，我们需要使用 <code>opt</code> 工具加载并运行自定义 pass：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">$ opt --load-pass-plugin=./PPProfile.so --passes=<span class="hljs-string">&quot;ppprofiler&quot;</span> --stats hello.ll -o hello_inst.bc<br></code></pre></td></tr></table></figure>
+<h5 id="解释-3">解释：</h5>
+<ul>
+<li><strong><code>--load-pass-plugin=./PPProfile.so</code></strong>：加载包含自定义
+pass 的共享库。</li>
+<li><strong><code>--passes="ppprofiler"</code></strong>：指定要运行的
+pass 名称。</li>
+<li><strong><code>--stats</code></strong>：启用统计信息收集。</li>
+<li><strong><code>hello.ll</code></strong>：输入的 LLVM IR 文件。</li>
+<li><strong><code>-o hello_inst.bc</code></strong>：输出优化后的 bitcode
+文件。</li>
+</ul>
+<h4 id="查看统计信息">2. 查看统计信息</h4>
+<p>如果统计信息收集启用，你会看到如下输出：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs sh">===--------------------------------------------------------===<br>... Statistics Collected ...<br>===--------------------------------------------------------===<br>1 ppprofiler - Number of instrumented <span class="hljs-built_in">functions</span>.<br></code></pre></td></tr></table></figure>
+<p>如果统计信息未启用，你会看到提示信息：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">Statistics are disabled. Build with asserts or with -DLLVM_FORCE_ENABLE_STATS<br></code></pre></td></tr></table></figure>
+<h4 id="使用-llvm-dis-工具查看生成的-ir">3. 使用 <code>llvm-dis</code>
+工具查看生成的 IR</h4>
+<p>使用 <code>llvm-dis</code> 工具将 bitcode 文件转换为可读的 LLVM
+IR：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">$ llvm-dis hello_inst.bc -o -<br></code></pre></td></tr></table></figure>
+<p>这将输出类似如下内容：</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs llvm"><span class="hljs-title">@.str</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">private</span> <span class="hljs-keyword">unnamed_addr</span> <span class="hljs-keyword">constant</span> [<span class="hljs-number">6</span> <span class="hljs-keyword">x</span> <span class="hljs-type">i8</span>] <span class="hljs-keyword">c</span><span class="hljs-string">&quot;Hello<span class="hljs-char escape_">\00</span>&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-keyword">align</span> <span class="hljs-number">1</span><br><span class="hljs-title">@0</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">private</span> <span class="hljs-keyword">unnamed_addr</span> <span class="hljs-keyword">constant</span> [<span class="hljs-number">5</span> <span class="hljs-keyword">x</span> <span class="hljs-type">i8</span>] <span class="hljs-keyword">c</span><span class="hljs-string">&quot;main<span class="hljs-char escape_">\00</span>&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-keyword">align</span> <span class="hljs-number">1</span><br><br><span class="hljs-keyword">define</span> dso_local <span class="hljs-type">i32</span> <span class="hljs-title">@main</span>(<span class="hljs-type">i32</span> noundef <span class="hljs-variable">%0</span><span class="hljs-punctuation">,</span> ptr <span class="hljs-keyword">nocapture</span> noundef <span class="hljs-keyword">readnone</span> <span class="hljs-variable">%1</span>) &#123;<br>  <span class="hljs-keyword">call</span> void <span class="hljs-title">@__ppp_enter</span>(ptr <span class="hljs-title">@0</span>)<br>  <span class="hljs-variable">%3</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">tail</span> <span class="hljs-keyword">call</span> <span class="hljs-type">i32</span> <span class="hljs-title">@puts</span>(ptr noundef nonnull dereferenceable(<span class="hljs-number">1</span>) <span class="hljs-title">@.str</span>)<br>  <span class="hljs-keyword">call</span> void <span class="hljs-title">@__ppp_exit</span>(ptr <span class="hljs-title">@0</span>)<br>  <span class="hljs-keyword">ret</span> <span class="hljs-type">i32</span> <span class="hljs-number">0</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="实现运行时支持">4. 实现运行时支持</h4>
+<p>为了将 IR 转换为可执行文件并运行，我们需要提供
+<code>__ppp_enter</code> 和 <code>__ppp_exit</code>
+函数的实现。创建一个名为 <code>runtime.c</code> 的文件，内容如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;time.h&gt;</span></span><br><br><span class="hljs-comment">// 文件描述符和清理函数</span><br><span class="hljs-type">static</span> FILE *FileFD = <span class="hljs-literal">NULL</span>;<br><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">cleanup</span><span class="hljs-params">()</span> &#123;<br>  <span class="hljs-keyword">if</span> (FileFD != <span class="hljs-literal">NULL</span>) &#123;<br>    fclose(FileFD);<br>    FileFD = <span class="hljs-literal">NULL</span>;<br>  &#125;<br>&#125;<br><br><span class="hljs-comment">// 初始化函数，打开文件并注册清理函数</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">init</span><span class="hljs-params">()</span> &#123;<br>  <span class="hljs-keyword">if</span> (FileFD == <span class="hljs-literal">NULL</span>) &#123;<br>    FileFD = fopen(<span class="hljs-string">&quot;ppprofile.csv&quot;</span>, <span class="hljs-string">&quot;w&quot;</span>);<br>    atexit(&amp;cleanup);<br>  &#125;<br>&#125;<br><br><span class="hljs-comment">// 获取时间戳的函数</span><br><span class="hljs-keyword">typedef</span> <span class="hljs-type">unsigned</span> <span class="hljs-type">long</span> <span class="hljs-type">long</span> Time;<br><br><span class="hljs-type">static</span> Time <span class="hljs-title function_">get_time</span><span class="hljs-params">()</span> &#123;<br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">timespec</span> <span class="hljs-title">ts</span>;</span><br>  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &amp;ts);<br>  <span class="hljs-keyword">return</span> <span class="hljs-number">1000000000L</span> * ts.tv_sec + ts.tv_nsec;<br>&#125;<br><br><span class="hljs-comment">// 进入函数，记录事件</span><br><span class="hljs-type">void</span> __ppp_enter(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *FnName) &#123;<br>  init();<br>  Time T = get_time();<br>  <span class="hljs-type">void</span> *Frame = __builtin_frame_address(<span class="hljs-number">1</span>);<br>  <span class="hljs-built_in">fprintf</span>(FileFD, <span class="hljs-string">&quot;enter|%s|%llu|%p\n&quot;</span>, FnName, T, Frame);<br>&#125;<br><br><span class="hljs-comment">// 退出函数，记录事件</span><br><span class="hljs-type">void</span> __ppp_exit(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *FnName) &#123;<br>  init();<br>  Time T = get_time();<br>  <span class="hljs-type">void</span> *Frame = __builtin_frame_address(<span class="hljs-number">1</span>);<br>  <span class="hljs-built_in">fprintf</span>(FileFD, <span class="hljs-string">&quot;exit|%s|%llu|%p\n&quot;</span>, FnName, T, Frame);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h4 id="编译和运行">5. 编译和运行</h4>
+<p>将 instrumented bitcode
+文件与运行时代码一起编译，并运行生成的可执行文件：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sh">$ clang hello_inst.bc runtime.c<br>$ ./a.out<br></code></pre></td></tr></table></figure>
+<p>这将生成一个名为 <code>ppprofile.csv</code> 的文件，内容如下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs sh">$ <span class="hljs-built_in">cat</span> ppprofile.csv<br>enter|main|3300868|0x1<br><span class="hljs-built_in">exit</span>|main|3760638|0x1<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p><em>SPECIFYING A PASS PIPELINE</em></p>
+<p>可以使用 <code>--passes</code> 选项指定一个包含多个 pass
+的管道。例如，运行 <code>ppprofiler</code> pass 然后运行默认的 O2
+优化管道，可以使用以下命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash">opt --load-pass-plugin=./PPProfile.so --passes=<span class="hljs-string">&quot;ppprofiler,default&lt;O2&gt;&quot;</span> --stats hello.ll -o hello_inst.bc</span><br></code></pre></td></tr></table></figure>
+</blockquote>
+<h3 id="plugging-the-new-pass-into-clang"><strong>Plugging the new pass
+into clang</strong></h3>
+<p>LLVM Pass Manger有着默认的Pass执行流，被称作 <strong>default pass
+pipeline</strong>，我们可以使用opt指定pipeline，但是，当我们想要在非常特定的点加入我们的Pass的时候，比如在loop
+optimization processes
+的结尾。而我们可以通过<strong>PassBuilder</strong>在这些
+<strong>extension
+points</strong>进行注册我们的Pass，比如我们可以通过<strong>registerPipelineStartEPCallback()</strong>来将我们的Pass添加到优化管道的开始。==每当pass
+manager填充默认pass管道时==，它都会调用扩展点的所有回调。</p>
+<p>可以通过以下方式使用</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">clang -fpass-plugin=./PPProfiler.so hello.c runtime.c<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>==集成到更大的项目中==</strong></p>
+<p>要将这些步骤集成到更大的项目中，可以在 CMake
+命令行中指定编译器和链接器标志。例如，假设要编译 <code>tinylang</code>
+编译器：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sh">-DCMAKE_CXX_FLAGS=<span class="hljs-string">&quot;-fpass-plugin=&lt;PluginPath&gt;/PPProfiler.so&quot;</span><br>-DCMAKE_EXE_LINKER_FLAGS=<span class="hljs-string">&quot;&lt;RuntimePath&gt;/runtime.o&quot;</span><br></code></pre></td></tr></table></figure>
+<p>其中 <code>&lt;PluginPath&gt;</code> 和
+<code>&lt;RuntimePath&gt;</code>
+分别替换为插件和运行时代码的绝对路径。</p>
+<p>同时，确保使用 Clang 作为编译器：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-built_in">export</span> CC=clang<br><span class="hljs-built_in">export</span> CXX=clang++<br></code></pre></td></tr></table></figure>
+</blockquote>
+<h2 id="how-to-make-a-plugin-out-of-the-source-code">How to make a
+plugin out of the source code</h2>
+<p>自己总结的一章，总在源码树里编译不太舒服</p>
+<p>这里依旧使用以上代码，即</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/ADT/Statistic.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/IR/Function.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/IR/PassManager.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Passes/PassBuilder.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Passes/PassPlugin.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;llvm/Support/Debug.h&quot;</span></span><br><br><span class="hljs-keyword">using</span> <span class="hljs-keyword">namespace</span> llvm;<br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> DEBUG_TYPE <span class="hljs-string">&quot;ppprofiler&quot;</span></span><br><span class="hljs-comment">//LLVM的内置调试基础架构要求我们定义一个调试类型，它是一个字符串。此字符串稍后将显示在打印的统计信息中</span><br><br><span class="hljs-built_in">ALWAYS_ENABLED_STATISTIC</span>(<br>    NumOfFunc, <span class="hljs-string">&quot;Number of instrumented functions.&quot;</span>);<br><br><span class="hljs-keyword">namespace</span> &#123;<br><span class="hljs-comment">//在匿名空间内定义对应的Pass类，继承PassInfoMixin，run是其回调方法</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">PPProfilerIRPass</span><br>    : <span class="hljs-keyword">public</span> llvm::PassInfoMixin&lt;PPProfilerIRPass&gt; &#123;<br><span class="hljs-keyword">public</span>:<br>  <span class="hljs-function">llvm::PreservedAnalyses</span><br><span class="hljs-function">  <span class="hljs-title">run</span><span class="hljs-params">(llvm::Module &amp;M, llvm::ModuleAnalysisManager &amp;AM)</span></span>;<br><br><span class="hljs-keyword">private</span>:<br>  <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">instrument</span><span class="hljs-params">(llvm::Function &amp;F,</span></span><br><span class="hljs-params"><span class="hljs-function">                  llvm::Function *EnterFn,</span></span><br><span class="hljs-params"><span class="hljs-function">                  llvm::Function *ExitFn)</span></span>;<br>&#125;;<br>&#125; <span class="hljs-comment">// namespace</span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">PPProfilerIRPass::instrument</span><span class="hljs-params">(llvm::Function &amp;F,</span></span><br><span class="hljs-params"><span class="hljs-function">                                  Function *EnterFn,</span></span><br><span class="hljs-params"><span class="hljs-function">                                  Function *ExitFn)</span> </span>&#123;<br>  ++NumOfFunc;<br><br>  <span class="hljs-comment">// Set the insertion point to begin of first block.</span><br>  IRBuilder&lt;&gt; <span class="hljs-built_in">Builder</span>(&amp;*F.<span class="hljs-built_in">getEntryBlock</span>().<span class="hljs-built_in">begin</span>());<br><br>  <span class="hljs-comment">// Create global constant for the function name.</span><br>  GlobalVariable *FnName =<br>      Builder.<span class="hljs-built_in">CreateGlobalString</span>(F.<span class="hljs-built_in">getName</span>());<br><br>  <span class="hljs-comment">// Call the EnterFn at function entry.</span><br>  Builder.<span class="hljs-built_in">CreateCall</span>(EnterFn-&gt;<span class="hljs-built_in">getFunctionType</span>(), EnterFn,<br>                     &#123;FnName&#125;);<br><br>  <span class="hljs-comment">// Find all Ret instructions, and call ExitFn before.</span><br>  <span class="hljs-keyword">for</span> (BasicBlock &amp;BB : F) &#123;<br>    <span class="hljs-keyword">for</span> (Instruction &amp;Inst : BB) &#123;<br>      <span class="hljs-keyword">if</span> (Inst.<span class="hljs-built_in">getOpcode</span>() == Instruction::Ret) &#123;<br>        Builder.<span class="hljs-built_in">SetInsertPoint</span>(&amp;Inst);<br>        Builder.<span class="hljs-built_in">CreateCall</span>(ExitFn-&gt;<span class="hljs-built_in">getFunctionType</span>(),<br>                           ExitFn, &#123;FnName&#125;);<br>      &#125;<br>    &#125;<br>  &#125;<br>&#125;<br><br><span class="hljs-function">PreservedAnalyses</span><br><span class="hljs-function"><span class="hljs-title">PPProfilerIRPass::run</span><span class="hljs-params">(Module &amp;M,</span></span><br><span class="hljs-params"><span class="hljs-function">                      ModuleAnalysisManager &amp;AM)</span> </span>&#123;<br>  <span class="hljs-comment">// Do not instrument the runtime functions.</span><br>  <span class="hljs-comment">// 避免无线递归</span><br>  <span class="hljs-keyword">if</span> (M.<span class="hljs-built_in">getFunction</span>(<span class="hljs-string">&quot;__ppp_enter&quot;</span>) ||<br>      M.<span class="hljs-built_in">getFunction</span>(<span class="hljs-string">&quot;__ppp_exit&quot;</span>)) &#123;<br>    <span class="hljs-keyword">return</span> PreservedAnalyses::<span class="hljs-built_in">all</span>();<br>  &#125;<br><br>  <span class="hljs-comment">// Create the function type and functions.</span><br>  Type *VoidTy = Type::<span class="hljs-built_in">getVoidTy</span>(M.<span class="hljs-built_in">getContext</span>());<br>  PointerType *PtrTy =<br>      PointerType::<span class="hljs-built_in">getUnqual</span>(M.<span class="hljs-built_in">getContext</span>());<br>  FunctionType *EnterExitFty =<br>      FunctionType::<span class="hljs-built_in">get</span>(VoidTy, &#123;PtrTy&#125;, <span class="hljs-literal">false</span>);<br>  Function *EnterFn = Function::<span class="hljs-built_in">Create</span>(<br>      EnterExitFty, GlobalValue::ExternalLinkage,<br>      <span class="hljs-string">&quot;__ppp_enter&quot;</span>, M);<br>  Function *ExitFn = Function::<span class="hljs-built_in">Create</span>(<br>      EnterExitFty, GlobalValue::ExternalLinkage,<br>      <span class="hljs-string">&quot;__ppp_exit&quot;</span>, M);<br><br>  <span class="hljs-comment">// Call enter function.</span><br>  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> &amp;F : M.<span class="hljs-built_in">functions</span>()) &#123;<br>    <span class="hljs-keyword">if</span> (!F.<span class="hljs-built_in">isDeclaration</span>() &amp;&amp; F.<span class="hljs-built_in">hasName</span>())<br>      <span class="hljs-built_in">instrument</span>(F, EnterFn, ExitFn);<br>  &#125;<br>  <span class="hljs-comment">// 当一个 LLVM pass 运行时，它可能会修改中间表示（IR），从而使某些之前的分析结果失效。</span><br>  <span class="hljs-comment">// 为了确保没有错误，代码示例中建议返回 PreservedAnalyses::none()，表示没有保留任何分析结果</span><br>  <span class="hljs-comment">// 这样做虽然比较保守（可能会导致重新计算一些分析结果），但可以保证安全性，因为不会依赖已经失效的分析结果。</span><br>  <span class="hljs-keyword">return</span> PreservedAnalyses::<span class="hljs-built_in">none</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">RegisterCB</span><span class="hljs-params">(PassBuilder &amp;PB)</span> </span>&#123;<br>  PB.<span class="hljs-built_in">registerPipelineParsingCallback</span>(<br>      [](StringRef Name, ModulePassManager &amp;MPM,<br>         ArrayRef&lt;PassBuilder::PipelineElement&gt;) &#123;<br>        <span class="hljs-keyword">if</span> (Name == <span class="hljs-string">&quot;ppprofiler&quot;</span>) &#123;<br>          MPM.<span class="hljs-built_in">addPass</span>(<span class="hljs-built_in">PPProfilerIRPass</span>());<br>          <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>      &#125;);<br>  PB.<span class="hljs-built_in">registerPipelineStartEPCallback</span>(<br>      [](ModulePassManager &amp;PM, OptimizationLevel Level) &#123;<br>        PM.<span class="hljs-built_in">addPass</span>(<span class="hljs-built_in">PPProfilerIRPass</span>());<br>      &#125;);<br>&#125;<br><br><span class="hljs-function">llvm::PassPluginLibraryInfo <span class="hljs-title">getPPProfilerPluginInfo</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-keyword">return</span> &#123;LLVM_PLUGIN_API_VERSION, <span class="hljs-string">&quot;PPProfiler&quot;</span>, <span class="hljs-string">&quot;v0.1&quot;</span>,<br>          RegisterCB&#125;;<br>&#125;<br><br><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> LLVM_PPPROFILER_LINK_INTO_TOOLS</span><br><span class="hljs-keyword">extern</span> <span class="hljs-string">&quot;C&quot;</span> LLVM_ATTRIBUTE_WEAK ::<span class="hljs-function">llvm::PassPluginLibraryInfo</span><br><span class="hljs-function"><span class="hljs-title">llvmGetPassPluginInfo</span><span class="hljs-params">()</span> </span>&#123;<br>  <span class="hljs-keyword">return</span> <span class="hljs-built_in">getPPProfilerPluginInfo</span>();<br>&#125;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+<p>同一目录下CMakeLists.txt如下</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs cmake"><span class="hljs-keyword">cmake_minimum_required</span>(VERSION <span class="hljs-number">3.20</span>.<span class="hljs-number">0</span>)<br><span class="hljs-keyword">project</span>(ppprofilerpass)<br><span class="hljs-comment"># 安装了才有</span><br><span class="hljs-comment"># 设置 CMAKE_PREFIX_PATH 以包含特定的 LLVM 路径</span><br><span class="hljs-keyword">set</span>(LLVM_DIR <span class="hljs-string">&quot;/home/zzzccc/llvm-project/build/lib/cmake/llvm&quot;</span>)<br><span class="hljs-keyword">find_package</span>(LLVM REQUIRED CONFIG)<br><br><span class="hljs-comment"># list(APPEND CMAKE_MODULE_PATH &quot;/home/zzzccc/llvm-project/llvm/cmake/modules&quot;)</span><br><span class="hljs-keyword">message</span>(STATUS <span class="hljs-string">&quot;Found LLVM $&#123;LLVM_PACKAGE_VERSION&#125;&quot;</span>)<br><span class="hljs-keyword">message</span>(STATUS <span class="hljs-string">&quot;Using LLVMConfig.cmake in: $&#123;LLVM_DIR&#125;&quot;</span>)<br><br><span class="hljs-comment"># include(ChooseMSVCCRT)</span><br><span class="hljs-keyword">include</span>(AddLLVM)<br><span class="hljs-keyword">include</span>(HandleLLVMOptions)<br><br><span class="hljs-keyword">include_directories</span>(<span class="hljs-string">&quot;$&#123;LLVM_INCLUDE_DIR&#125;&quot;</span>)<br><span class="hljs-keyword">add_definitions</span>(<span class="hljs-string">&quot;$&#123;LLVM_DEFINITIONS&#125;&quot;</span>)<br><br><span class="hljs-keyword">link_directories</span>(<span class="hljs-string">&quot;$&#123;LLVM_LIBRARY_DIR&#125;&quot;</span>)<br><br>add_llvm_pass_plugin(PPProfiler <br>    MODULE <br>    PPProfiler.cpp<br>    <br>    DEPENDS<br>    intrinsics_gen<br>    )<br></code></pre></td></tr></table></figure>
+<p>这里<code>CMakeLists</code>搞了好一阵子，主要是研究了下<code>find_package</code>的用法，参考以下两篇文章：https://blog.csdn.net/qq_39466755/article/details/130912344
+、https://zhuanlan.zhihu.com/p/50829542</p>
+<p>这里首先明确<code>find_package</code>有两种模式，如下</p>
+<blockquote>
+<p><code>module模式</code>
+在这个模式下会查找一个名为find.cmake的文件，首先去CMAKE_MODULE_PATH指定的路径下去查找，然后去cmake安装提供的查找模块中查找（安装cmake时生成的一些cmake文件）。找到之后会检查版本，生成一些需要的信息。</p>
+<p><code>config模式</code>
+在这个模式下会查找一个名为-config.cmake（<小写包名>-config.cmake）或者Config.cmake
+的文件，如果指定了版本信息也会搜索名为-config-version.cmake 或者
+ConfigVersion.cmake的文件。</p>
+</blockquote>
+<p>而LLVM编译安装后会在/install/lib/llvm下存在相应的<code>LLVMConfig.cmake</code>，而其主要搜寻路径如下</p>
+<blockquote>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">&lt;package&gt;_DIR<br>CMAKE_PREFIX_PATH<br>CMAKE_FRAMEWORK_PATH<br>CMAKE_APPBUNDLE_PATH<br>PATH<br></code></pre></td></tr></table></figure>
+</blockquote>
+<p>故只需要设置LLVM_DIR并将find_package改为搜寻config模式即可</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs cmake"><span class="hljs-keyword">set</span>(LLVM_DIR <span class="hljs-string">&quot;/home/zzzccc/llvm-project/build/lib/cmake/llvm&quot;</span>)<br><span class="hljs-keyword">find_package</span>(LLVM REQUIRED CONFIG)<br></code></pre></td></tr></table></figure>
+<p>编译通过</p>
+<figure>
+<img src="./image-20240519231217873.png" srcset="/img/loading.gif" lazyload
+alt="image-20240519231217873" />
+<figcaption aria-hidden="true">image-20240519231217873</figcaption>
+</figure>
+<p>测试是否能够正常使用</p>
+<p>测试代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span>&#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;hello world!&quot;</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>使用以下命令编译</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">/home/zzzccc/llvm-project/build/bin/clang -S -emit-llvm test.c -o test.ll<br></code></pre></td></tr></table></figure>
+<p>结果如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs ir">; ModuleID = &#x27;test.c&#x27;<br>source_filename = &quot;test.c&quot;<br>target datalayout = &quot;e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128&quot;<br>target triple = &quot;x86_64-unknown-linux-gnu&quot;<br><br>@.str = private unnamed_addr constant [13 x i8] c&quot;hello world!\00&quot;, align 1<br><br>; Function Attrs: noinline nounwind optnone uwtable<br>define dso_local i32 @main() #0 &#123;<br>  %1 = alloca i32, align 4<br>  store i32 0, ptr %1, align 4<br>  %2 = call i32 (ptr, ...) @printf(ptr noundef @.str)<br>  ret i32 0<br>&#125;<br><br>declare i32 @printf(ptr noundef, ...) #1<br><br>attributes #0 = &#123; noinline nounwind optnone uwtable &quot;frame-pointer&quot;=&quot;all&quot; &quot;min-legal-vector-width&quot;=&quot;0&quot; &quot;no-trapping-math&quot;=&quot;true&quot; &quot;stack-protector-buffer-size&quot;=&quot;8&quot; &quot;target-cpu&quot;=&quot;x86-64&quot; &quot;target-features&quot;=&quot;+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87&quot; &quot;tune-cpu&quot;=&quot;generic&quot; &#125;<br>attributes #1 = &#123; &quot;frame-pointer&quot;=&quot;all&quot; &quot;no-trapping-math&quot;=&quot;true&quot; &quot;stack-protector-buffer-size&quot;=&quot;8&quot; &quot;target-cpu&quot;=&quot;x86-64&quot; &quot;target-features&quot;=&quot;+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87&quot; &quot;tune-cpu&quot;=&quot;generic&quot; &#125;<br><br>!llvm.module.flags = !&#123;!0, !1, !2, !3, !4&#125;<br>!llvm.ident = !&#123;!5&#125;<br><br>!0 = !&#123;i32 1, !&quot;wchar_size&quot;, i32 4&#125;<br>!1 = !&#123;i32 8, !&quot;PIC Level&quot;, i32 2&#125;<br>!2 = !&#123;i32 7, !&quot;PIE Level&quot;, i32 2&#125;<br>!3 = !&#123;i32 7, !&quot;uwtable&quot;, i32 2&#125;<br>!4 = !&#123;i32 7, !&quot;frame-pointer&quot;, i32 2&#125;<br>!5 = !&#123;!&quot;clang version 18.1.2 (https://github.com/llvm/llvm-project.git ea6c457b8dd2d0e6a7f05b4a5bdd2686085e1ec0)&quot;&#125;<br><br></code></pre></td></tr></table></figure>
+<p>使用以下命令</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">/home/zzzccc/llvm-project/build/bin/opt --load-pass-plugin=./PPProfiler.so --passes=<span class="hljs-string">&quot;ppprofiler&quot;</span> --stats test.ll -o test.bc<br></code></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sh">/home/zzzccc/llvm-project/build/bin/llvm-dis test.bc -o test_1.ll<br></code></pre></td></tr></table></figure>
+<p>可以看到优化后的IR文件如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs ir">; ModuleID = &#x27;test.bc&#x27;<br>source_filename = &quot;test.c&quot;<br>target datalayout = &quot;e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128&quot;<br>target triple = &quot;x86_64-unknown-linux-gnu&quot;<br><br>@.str = private unnamed_addr constant [13 x i8] c&quot;hello world!\00&quot;, align 1<br>@0 = private unnamed_addr constant [5 x i8] c&quot;main\00&quot;, align 1<br><br>; Function Attrs: noinline nounwind optnone uwtable<br>define dso_local i32 @main() #0 &#123;<br>  call void @__ppp_enter(ptr @0)<br>  %1 = alloca i32, align 4<br>  store i32 0, ptr %1, align 4<br>  %2 = call i32 (ptr, ...) @printf(ptr noundef @.str)<br>  call void @__ppp_exit(ptr @0)<br>  ret i32 0<br>&#125;<br><br>declare i32 @printf(ptr noundef, ...) #1<br><br>declare void @__ppp_enter(ptr)<br><br>declare void @__ppp_exit(ptr)<br><br>attributes #0 = &#123; noinline nounwind optnone uwtable &quot;frame-pointer&quot;=&quot;all&quot; &quot;min-legal-vector-width&quot;=&quot;0&quot; &quot;no-trapping-math&quot;=&quot;true&quot; &quot;stack-protector-buffer-size&quot;=&quot;8&quot; &quot;target-cpu&quot;=&quot;x86-64&quot; &quot;target-features&quot;=&quot;+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87&quot; &quot;tune-cpu&quot;=&quot;generic&quot; &#125;<br>attributes #1 = &#123; &quot;frame-pointer&quot;=&quot;all&quot; &quot;no-trapping-math&quot;=&quot;true&quot; &quot;stack-protector-buffer-size&quot;=&quot;8&quot; &quot;target-cpu&quot;=&quot;x86-64&quot; &quot;target-features&quot;=&quot;+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87&quot; &quot;tune-cpu&quot;=&quot;generic&quot; &#125;<br><br>!llvm.module.flags = !&#123;!0, !1, !2, !3, !4&#125;<br>!llvm.ident = !&#123;!5&#125;<br><br>!0 = !&#123;i32 1, !&quot;wchar_size&quot;, i32 4&#125;<br>!1 = !&#123;i32 8, !&quot;PIC Level&quot;, i32 2&#125;<br>!2 = !&#123;i32 7, !&quot;PIE Level&quot;, i32 2&#125;<br>!3 = !&#123;i32 7, !&quot;uwtable&quot;, i32 2&#125;<br>!4 = !&#123;i32 7, !&quot;frame-pointer&quot;, i32 2&#125;<br>!5 = !&#123;!&quot;clang version 18.1.2 (https://github.com/llvm/llvm-project.git ea6c457b8dd2d0e6a7f05b4a5bdd2686085e1ec0)&quot;&#125;<br></code></pre></td></tr></table></figure>
+<p>成功了捏</p>
+<h2 id="adding-an-optimization-pipeline-to-your-compiler">Adding an
+optimization pipeline to your compiler</h2>
+<p>后续关于Pipeline的这部分似乎还没看到啥资料，会更加认真的学习（但是还是有需要了再补吧）</p>
+<h2 id="参考">参考</h2>
+<p>主要参考《Learn_LLVM_17_A_beginner's_guide_to_learning_LLVM_2nd》</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/REVERSE/" class="print-no-link">#REVERSE</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>LLVM_NEW_PASS_ALL_IN_ONE</div>
+      <div>http://yghde.cc/2024/05/19/LLVM-NEW-PASS-ALL-IN-ONE/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>cc&yg</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/19/ciscn2024-rewp/" title="ciscn2024_rewp">
+                        <span class="hidden-mobile">ciscn2024_rewp</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"AwATvI9ZA8LoLCByT7WpHEdF-gzGzoHsz","appKey":"sXn32uhs07PXe9VAlgypzUYp","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
