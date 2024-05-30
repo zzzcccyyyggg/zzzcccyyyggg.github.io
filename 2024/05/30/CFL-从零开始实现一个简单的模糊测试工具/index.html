@@ -1,0 +1,748 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/newhead.jpg">
+  <link rel="icon" href="/img/newhead.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="cc&amp;yg">
+  <meta name="keywords" content="英勇无畏、勇于牺牲、崇尚荣誉、怜悯弱者、诚实守信、谦卑礼貌、择善固执">
+  
+    <meta name="description" content="CFL:从零开始实现一个简单的模糊测试工具 学习AFL自己实现了个简单的模糊测试工具，简单记录下 Instrument 首先是插桩部分，这里用LLVM12 Newpass 完成插桩，做了两件事情，首先定义了两个全局变量 12345678910111213&#x2F;* Get globals for the SHM region and the previous location. Note th">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CFL:从零开始实现一个简单的模糊测试工具">
+<meta property="og:url" content="http://yghde.cc/2024/05/30/CFL-%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84%E6%A8%A1%E7%B3%8A%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/index.html">
+<meta property="og:site_name" content="CC&amp;YG">
+<meta property="og:description" content="CFL:从零开始实现一个简单的模糊测试工具 学习AFL自己实现了个简单的模糊测试工具，简单记录下 Instrument 首先是插桩部分，这里用LLVM12 Newpass 完成插桩，做了两件事情，首先定义了两个全局变量 12345678910111213&#x2F;* Get globals for the SHM region and the previous location. Note th">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yghde.cc/img/26.png">
+<meta property="article:published_time" content="2024-05-30T15:35:11.000Z">
+<meta property="article:modified_time" content="2024-05-30T15:36:47.651Z">
+<meta property="article:author" content="cc&amp;yg">
+<meta property="article:tag" content="IDONKONW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://yghde.cc/img/26.png">
+  
+  
+  
+  <title>CFL:从零开始实现一个简单的模糊测试工具 - CC&amp;YG</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/macpanel.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"yghde.cc","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-double-row-display@1.00/cardlistpost.min.css"/>
+<style>#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags:before {content:"\A";
+  white-space: pre;}#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags > .article-meta__separator{display:none}</style>
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.1.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ZzzCcc&#39;s BLOG</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default2.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="CFL:从零开始实现一个简单的模糊测试工具"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-05-30 23:35" pubdate>
+          2024年5月30日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          53 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">CFL:从零开始实现一个简单的模糊测试工具</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1
+id="cfl从零开始实现一个简单的模糊测试工具">CFL:从零开始实现一个简单的模糊测试工具</h1>
+<p>学习AFL自己实现了个简单的模糊测试工具，简单记录下</p>
+<h2 id="instrument">Instrument</h2>
+<p>首先是插桩部分，这里用LLVM12 Newpass
+完成插桩，做了两件事情，首先定义了两个全局变量</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* Get globals for the SHM region and the previous location. Note that</span><br><span class="hljs-comment">  __afl_prev_loc is thread-local. */</span><br><span class="hljs-comment">//地址空间编号（在这个例子中是 0），这个编号指定了生成的指针类型应该位于哪个地址空间。</span><br>GlobalVariable *CFLMapPtr =<br>        new GlobalVariable(M, PointerType::get(Int8Ty, <span class="hljs-number">0</span>), <span class="hljs-literal">false</span>,<br>                           GlobalValue::ExternalLinkage, <span class="hljs-number">0</span>, <span class="hljs-string">&quot;__cfl_area_ptr&quot;</span>);<br><span class="hljs-comment">/*</span><br><span class="hljs-comment">GlobalValue::ExternalLinkage 使得这个变量可以被模块外部代码引用。</span><br><span class="hljs-comment">GlobalVariable::GeneralDynamicTLSModel 指定了线程局部存储（TLS）的模型，这里使用的是通用动态模型，适用于大多数情况。</span><br><span class="hljs-comment">*/</span><br>GlobalVariable *CFLPrevLoc = new GlobalVariable(<br>        M, Int32Ty, <span class="hljs-literal">false</span>, GlobalValue::ExternalLinkage, <span class="hljs-number">0</span>, <span class="hljs-string">&quot;__cfl_prev_loc&quot;</span>,<br>        <span class="hljs-number">0</span>, GlobalVariable::GeneralDynamicTLSModel, <span class="hljs-number">0</span>, <span class="hljs-literal">false</span>);<br></code></pre></td></tr></table></figure>
+<p>其中<code>__cfl_area_ptr</code>用于存储覆盖率，而<code>__cfl_prev_loc</code>用于计算哈希，其中<code>__cfl_area_ptr</code>的共享将在<code>cfl-llvm-rt.o.c</code>中实现</p>
+<p>接着对每个Basic
+Block的开头进行插桩，首先获取随机数即<code>cur_loc</code>，并用<code>cur_loc</code>与上一处插桩代码获取的随机数右移一位的结果<code>prev_loc</code>进行异或，这是AFL防止重复的一种简单的哈希算法，这里借鉴下，作为当前块位于覆盖位图中的索，<strong>这里随机数在
+Pass
+运行时取，即在插桩后的代码中这些都是静态数据</strong>，接着更新覆盖位图对应位置的值，即加一，将<code>cur_loc</code>右移两位保存至覆盖位图作为下一轮使用的结果</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> &amp;F : M)&#123;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">auto</span> &amp;BB : F) &#123;<br>        <span class="hljs-comment">//找到基本块（BasicBlock）中的首个安全插入点，即第一个非 PHI（φ）节点的指令</span><br>        BasicBlock::iterator IP = BB.getFirstInsertionPt();<br>        IRBuilder&lt;&gt; IRB(&amp;(*IP));<br>        <span class="hljs-comment">//IRB.SetInsertPoint(BB);</span><br><br>        <span class="hljs-keyword">if</span> (CFL_R(<span class="hljs-number">100</span>) &gt;= inst_ratio) <span class="hljs-keyword">continue</span>;<br><br>        <span class="hljs-comment">/* Make up cur_loc */</span><br>        <span class="hljs-comment">//生成一个随机的位置 cur_loc，这个位置是在 AFL 的覆盖率位图（通常称为 coverage bitmap）中的一个索引</span><br>        <span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> cur_loc = CFL_R(MAP_SIZE);<br><br>        ConstantInt *CurLoc = ConstantInt::get(Int32Ty, cur_loc);<br><br>        <span class="hljs-comment">/* Load prev_loc */</span><br><br>        LoadInst *PrevLoc = IRB.CreateLoad(CFLPrevLoc);<br>        PrevLoc-&gt;setMetadata(M.getMDKindID(<span class="hljs-string">&quot;nosanitize&quot;</span>), MDNode::get(C, None));<br>        <span class="hljs-comment">//零拓展 保证是 32 位</span><br>        Value *PrevLocCasted = IRB.CreateZExt(PrevLoc, IRB.getInt32Ty());<br><br>        <span class="hljs-comment">/* Load SHM pointer */</span><br><br>        LoadInst *MapPtr = IRB.CreateLoad(CFLMapPtr);<br>        <span class="hljs-comment">//setMetadata 设定了一个元数据标记 &quot;nosanitize&quot;，意思是告诉编译器不对这次加载操作进行内存安全检查。</span><br>        MapPtr-&gt;setMetadata(M.getMDKindID(<span class="hljs-string">&quot;nosanitize&quot;</span>), MDNode::get(C, None));<br>        <span class="hljs-comment">//创建一个指针 指向 MpaPtr 加上 PreLocCasted 和 CurLoc 的异或结果</span><br>        Value *MapPtrIdx =<br>                IRB.CreateGEP(MapPtr, IRB.CreateXor(PrevLocCasted, CurLoc));<br><br>        <span class="hljs-comment">/* Update bitmap */</span><br>        <span class="hljs-comment">//这里应该是取指针 用指针定位相应位置的值 并在值上 +1 标识已经被覆盖</span><br>        LoadInst *Counter = IRB.CreateLoad(MapPtrIdx);<br>        Counter-&gt;setMetadata(M.getMDKindID(<span class="hljs-string">&quot;nosanitize&quot;</span>), MDNode::get(C, None));<br>        Value *Incr = IRB.CreateAdd(Counter, ConstantInt::get(Int8Ty, <span class="hljs-number">1</span>));<br>        IRB.CreateStore(Incr, MapPtrIdx)<br>                -&gt;setMetadata(M.getMDKindID(<span class="hljs-string">&quot;nosanitize&quot;</span>), MDNode::get(C, None));<br><br>        <span class="hljs-comment">/* Set prev_loc to cur_loc &gt;&gt; 1 */</span><br>        <span class="hljs-comment">//将 cur_loc 右移一位后的值存为 prev_loc，为下一个基本块执行时使用。这是一种简单的哈希操作，用于改变路径标识，减少不同路径间的冲突</span><br>        StoreInst *Store =<br>                IRB.CreateStore(ConstantInt::get(Int32Ty, cur_loc &gt;&gt; <span class="hljs-number">1</span>), CFLPrevLoc);<br>        Store-&gt;setMetadata(M.getMDKindID(<span class="hljs-string">&quot;nosanitize&quot;</span>), MDNode::get(C, None));<br><br>        inst_blocks++;<br><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="init">init</h2>
+<p>参考AFL，在程序开始前插入了初始化逻辑</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;./include/config.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;./include/types.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;./include/debug.h&quot;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;signal.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;assert.h&gt;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/mman.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/shm.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/wait.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/types.h&gt;</span></span><br><span class="hljs-comment">// __cfl_area_initial 是一块用于代码插桩输出的内存（非共享），直到执行__cfl_map_shm 将__cfl_area_ptr 指向一块共享内存为止。</span><br>u8  __cfl_area_initial[MAP_SIZE];<br>u8* __cfl_area_ptr = __cfl_area_initial;<br><br>__thread u32 __cfl_prev_loc;<br><br><span class="hljs-comment">/* SHM setup. */</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> __cfl_map_shm(<span class="hljs-type">void</span>) &#123;<br><br>  u8 *id_str = getenv(SHM_ENV_VAR);<br><br>  <span class="hljs-keyword">if</span> (id_str) &#123;<br><br>    u32 shm_id = atoi(id_str);<br><br>    __cfl_area_ptr = shmat(shm_id, <span class="hljs-literal">NULL</span>, <span class="hljs-number">0</span>);<br><br>    <span class="hljs-keyword">if</span> (__cfl_area_ptr == (<span class="hljs-type">void</span> *)<span class="hljs-number">-1</span>) _exit(<span class="hljs-number">1</span>);<br><br>    <span class="hljs-comment">/* Write something into the bitmap so that even with low AFL_INST_RATIO,</span><br><span class="hljs-comment">       our parent doesn&#x27;t give up on us. */</span><br>    __cfl_area_ptr[<span class="hljs-number">0</span>] = <span class="hljs-number">1</span>;<br><br>  &#125;<br><br>&#125;<br><span class="hljs-comment">//实现 forkserver</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> __cfl_start_forkserver(<span class="hljs-type">void</span>) &#123;<br><br>  <span class="hljs-type">static</span> u8 tmp[<span class="hljs-number">4</span>];<br>  s32 child_pid;<br>  <span class="hljs-comment">//通过管道通知父进程我们准备好了，如果通知失败即找不到父进程，直接返回当作正常程序执行</span><br>  <span class="hljs-keyword">if</span> (write(FORKSRV_FD + <span class="hljs-number">1</span>, tmp, <span class="hljs-number">4</span>) != <span class="hljs-number">4</span>) <span class="hljs-keyword">return</span>;<br>  <span class="hljs-comment">// 不断循环 与 fuzz 主程序保持交互</span><br>  <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>    <span class="hljs-type">int</span> status;<br>    <span class="hljs-comment">//如果对端进程 (通常是 fork 服务器) 没有向 FORKSRV_FD 写入数据，那么读取操作将一直阻塞，直到有数据可读或者出现错误</span><br>    <span class="hljs-keyword">if</span> (read(FORKSRV_FD, &amp;tmp, <span class="hljs-number">4</span>) != <span class="hljs-number">4</span>) _exit(<span class="hljs-number">1</span>);<br>    child_pid = fork();<br>    <span class="hljs-keyword">if</span> (child_pid &lt; <span class="hljs-number">0</span>) _exit(<span class="hljs-number">1</span>);<br>    <span class="hljs-comment">/* 在子进程中 将两个 pipe 都关闭 */</span><br>    <span class="hljs-keyword">if</span> (!child_pid) &#123;<br>      close(FORKSRV_FD);<br>      close(FORKSRV_FD + <span class="hljs-number">1</span>);<br>      <span class="hljs-keyword">return</span>;<br>    &#125;<br>    <span class="hljs-comment">/* 在父进程中阻塞等待子进程恢复 */</span><br>    <span class="hljs-keyword">if</span> (write(FORKSRV_FD + <span class="hljs-number">1</span>, &amp;child_pid, <span class="hljs-number">4</span>) != <span class="hljs-number">4</span>) _exit(<span class="hljs-number">1</span>);<br>    <span class="hljs-comment">/* 如果进程收到信号而终止 一般返回 -1 如内存不足等 但若是由自身原因导致终止一般返回相应的原因*/</span><br>    <span class="hljs-keyword">if</span> (waitpid(child_pid, &amp;status, <span class="hljs-number">0</span>) &lt; <span class="hljs-number">0</span>)<br>      _exit(<span class="hljs-number">1</span>);<br>    <span class="hljs-comment">//将错误发送给父进程</span><br>    <span class="hljs-keyword">if</span> (write(FORKSRV_FD + <span class="hljs-number">1</span>, &amp;status, <span class="hljs-number">4</span>) != <span class="hljs-number">4</span>) _exit(<span class="hljs-number">1</span>);<br>  &#125;<br>&#125;<br><br><span class="hljs-comment">/* This one can be called from user code when deferred forkserver mode</span><br><span class="hljs-comment">    is enabled. */</span><br><span class="hljs-type">void</span> __cfl_manual_init(<span class="hljs-type">void</span>) &#123;<br>  <span class="hljs-comment">//静态变量 只会初始化一次</span><br>  <span class="hljs-type">static</span> u8 init_done;<br>  <span class="hljs-keyword">if</span> (!init_done) &#123;<br>    __cfl_map_shm();<br>    __cfl_start_forkserver();<br>    init_done = <span class="hljs-number">1</span>;<br>  &#125;<br>&#125;<br><br> <span class="hljs-comment">/* Proper initialization routine. */</span><br><br> __attribute__((constructor(<span class="hljs-number">0</span>))) <span class="hljs-type">void</span> __cfl_auto_init(<span class="hljs-type">void</span>) &#123;<br><br>   __cfl_manual_init();<br><br> &#125;<br></code></pre></td></tr></table></figure>
+<p><strong>attribute</strong>((constructor(0))该属性能使得此函数被插入到程序的main函数之前</p>
+<h2 id="clang-wrapper">clang-wrapper</h2>
+<p>实现了一个简单的对clang编译器的包装来简化使用,简单介绍下相关函数，首先<code>find_obj</code>用于保证能够找到编译程序所需的动态链接库，即<code>CflLLVMPass.so</code>与<code>cfl-llvm-rt.o</code>文件</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">find_obj</span><span class="hljs-params">(u8* argv0)</span> &#123;<br>  <span class="hljs-comment">//尝试获取环境变量 CFL_PATH</span><br>  <span class="hljs-comment">//cfl is cc&#x27;s Fuzzing llvm</span><br>  <span class="hljs-comment">//slash 斜线</span><br>  u8 *cfl_path = getenv(<span class="hljs-string">&quot;CFL_PATH&quot;</span>);<br>  u8 *slash, *tmp,*tmp2;<br><br>  <span class="hljs-keyword">if</span> (cfl_path) &#123;<br>    <span class="hljs-comment">//使用 cfl_path 拼接出 CflLLVMPass.so 文件的完整路径 利用此路径来检查动态运行库的路径是否正确</span><br>    tmp = alloc_printf(<span class="hljs-string">&quot;%s/CflLLVMPass.so&quot;</span>, cfl_path);<br>    <span class="hljs-keyword">if</span> (!access(tmp, R_OK)) &#123;<br>      <span class="hljs-comment">//如果文件可读，则设置 obj_path 为 cfl_path，并释放临时变量，然后返回</span><br>      obj_path = cfl_path;<br>      PT(<span class="hljs-string">&quot;obj_path is %s&quot;</span>,obj_path);<br>      check_free(tmp);<br>      <span class="hljs-keyword">return</span>;<br>    &#125;<br>    check_free(tmp);<br>  &#125;<br>  <span class="hljs-comment">//如果 CFL_PATH 不可用，尝试从 argv0（程序路径）中获取目录</span><br>  <span class="hljs-comment">//strrchr 从后往前搜索</span><br>  <span class="hljs-comment">//判断是否是个路径 并且这里利用 slash 来改变 dir 的长度 只能说很妙</span><br>  slash = <span class="hljs-built_in">strrchr</span>(argv0, <span class="hljs-string">&#x27;/&#x27;</span>);<br>  <span class="hljs-keyword">if</span> (slash) &#123;<br>    u8 *dir;<br>    *slash = <span class="hljs-number">0</span>;<br>    dir = check_strdup(argv0);<br>    *slash = <span class="hljs-string">&#x27;/&#x27;</span>;<br><br>    tmp = alloc_printf(<span class="hljs-string">&quot;%s/CflLLVMPass.so&quot;</span>, dir);<br>    tmp2 = alloc_printf(<span class="hljs-string">&quot;%s/cfl-llvm-rt.o&quot;</span>, dir);<br>    <span class="hljs-keyword">if</span> ((!access(tmp, R_OK)) &amp;&amp; (!access(tmp2, R_OK))) &#123;<br>      obj_path = dir;<br>      check_free(tmp);<br>      <span class="hljs-keyword">return</span>;<br>    &#125;<br><br>    check_free(tmp);<br>    check_free(dir);<br>  &#125;<br>  FATAL(<span class="hljs-string">&quot;Unable to find &#x27;cfl-llvm-rt.o&#x27; or &#x27;CflLLVMPass.so&#x27;. Please set CFL_PATH&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着时<code>edit_params</code>，对传给 wrapper
+的参数初始化、解析并进行部分处理</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 对传给 wrapper 的参数初始化、解析并进行部分处理 */</span><br><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">edit_params</span><span class="hljs-params">(u32 argc, <span class="hljs-type">char</span>** argv)</span> &#123;<br><br>  u8 fortify_set = <span class="hljs-number">0</span>, asan_set = <span class="hljs-number">0</span>, x_set = <span class="hljs-number">0</span>, bit_mode = <span class="hljs-number">0</span>;<br>  u8 *name;<br><br>  cc_params = check_alloc((argc + <span class="hljs-number">128</span>) * <span class="hljs-keyword">sizeof</span>(u8*));<br>  <span class="hljs-comment">//同一段代码编译为了 Clang 与 Clang++ 故这里做一个判断</span><br>  name = <span class="hljs-built_in">strrchr</span>(argv[<span class="hljs-number">0</span>], <span class="hljs-string">&#x27;/&#x27;</span>);<br>  <span class="hljs-keyword">if</span> (!name) name = argv[<span class="hljs-number">0</span>]; <span class="hljs-keyword">else</span> name++;<br>  <span class="hljs-comment">//判断是 clang 还是 clang++</span><br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">strcmp</span>(name, <span class="hljs-string">&quot;cfl-clang++&quot;</span>)) &#123;<br>    u8* alt_cxx = getenv(<span class="hljs-string">&quot;CFL_CXX&quot;</span>);<br>    cc_params[<span class="hljs-number">0</span>] = alt_cxx ? alt_cxx : (u8*)<span class="hljs-string">&quot;clang++&quot;</span>;<br>  &#125; <span class="hljs-keyword">else</span> &#123;<br>    u8* alt_cc = getenv(<span class="hljs-string">&quot;CFL_CC&quot;</span>);<br>    cc_params[<span class="hljs-number">0</span>] = alt_cc ? alt_cc : (u8*)<span class="hljs-string">&quot;clang&quot;</span>;<br>  &#125;<br><br>  <span class="hljs-comment">//使用以下编译选项保证编译的正确进行并加载 pass 进行插桩</span><br>  cc_params[cc_par_cnt++] = <span class="hljs-string">&quot;-fno-legacy-pass-manager&quot;</span>;<br>  <span class="hljs-comment">//这里是忽略未定义符号 要是后边有办法把他加进去的话就删了</span><br>  cc_params[cc_par_cnt++] = <span class="hljs-string">&quot;-Wl,--unresolved-symbols=ignore-all&quot;</span>;<br>  cc_params[cc_par_cnt++] = alloc_printf(<span class="hljs-string">&quot;-fpass-plugin=%s/CflLLVMPass.so&quot;</span>, obj_path);<br>  <span class="hljs-comment">//-Qunused-arguments 是一个编译选项，用于告诉编译器忽略未使用的命令行参数，可以防止编译器生成未使用参数的警告</span><br>  cc_params[cc_par_cnt++] = <span class="hljs-string">&quot;-Qunused-arguments&quot;</span>;<br><br>  <span class="hljs-comment">//接着对传入的参数进行解析与复制</span><br>  <span class="hljs-keyword">while</span> (--argc) &#123;<br>    u8* cur = *(++argv);<br>    <span class="hljs-comment">//用来确保没有未定义的符号 项目中 部分东西比如__CFL_INIT_是链接.o文件上的，这里忽略保证编译的正确执行</span><br>    <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">strcmp</span>(cur, <span class="hljs-string">&quot;-Wl,-z,defs&quot;</span>) ||<br>        !<span class="hljs-built_in">strcmp</span>(cur, <span class="hljs-string">&quot;-Wl,--no-undefined&quot;</span>)) <span class="hljs-keyword">continue</span>;<br>    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">strcmp</span>(cur,<span class="hljs-string">&quot;-O0&quot;</span>)||<span class="hljs-built_in">strcmp</span>(cur,<span class="hljs-string">&quot;-O1&quot;</span>)||<span class="hljs-built_in">strcmp</span>(cur,<span class="hljs-string">&quot;-O2&quot;</span>)||<span class="hljs-built_in">strcmp</span>(cur,<span class="hljs-string">&quot;-O3&quot;</span>))&#123;<br>      optimization = <span class="hljs-number">1</span>;<br>    &#125;<br>    cc_params[cc_par_cnt++] = cur;<br>  &#125;<br>  <span class="hljs-comment">//若没指定优化等级 则取 O0，这里也保证了New Pass能被正确调用</span><br>  <span class="hljs-keyword">if</span>(!optimization)&#123;<br>    cc_params[cc_par_cnt++] = <span class="hljs-string">&quot;-O0&quot;</span>;<br>  &#125;<br><br><span class="hljs-comment">//这里是AFL deferred instrumentation 机制的实现方式 我这里尚未实现 但非常值得学习</span><br><span class="hljs-comment">//通过-D 可以传递宏定义</span><br><span class="hljs-comment">//__AFL_INIT()</span><br>  cc_params[cc_par_cnt++] = <span class="hljs-string">&quot;-D__CFL_INIT()=&quot;</span><br>    <span class="hljs-string">&quot;do &#123; static volatile char *_A __attribute__((used)); &quot;</span><br>    <span class="hljs-string">&quot; _A = (char*)\&quot;&quot;</span> DEFER_SIG <span class="hljs-string">&quot;\&quot;; &quot;</span><br>    <span class="hljs-string">&quot;__attribute__((visibility(\&quot;default\&quot;))) &quot;</span><br>    <span class="hljs-string">&quot;void _I(void) __asm__(\&quot;__cfl_manual_init\&quot;); &quot;</span><br>    <span class="hljs-string">&quot;_I(); &#125; while (0)&quot;</span>;<br><span class="hljs-comment">//__AFL_LOOP()</span><br>  cc_params[cc_par_cnt++] = <span class="hljs-string">&quot;-D__CFL_LOOP(_A)=&quot;</span><br>    <span class="hljs-string">&quot;(&#123; static volatile char *_B __attribute__((used)); &quot;</span><br>    <span class="hljs-string">&quot; _B = (char*)\&quot;&quot;</span> PERSIST_SIG <span class="hljs-string">&quot;\&quot;; &quot;</span>;<br><br>  cc_params[cc_par_cnt] = <span class="hljs-literal">NULL</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>主程序如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span>** argv)</span> &#123;<br><br><span class="hljs-comment">/* isatty(int fd) 用于检测一个文件描述符是否是一个终端设备 */</span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> MESSAGES_TO_STDOUT</span><br>  <span class="hljs-keyword">if</span> (isatty(<span class="hljs-number">1</span>) &amp;&amp; !getenv(<span class="hljs-string">&quot;CFL_QUIET&quot;</span>) ) &#123;<br>    PT(cCYA <span class="hljs-string">&quot;cfl-clang &quot;</span> cBRI VERSION  cRST <span class="hljs-string">&quot; by &lt;1539412714@qq.com&gt;\n&quot;</span>);<br>  &#125;<br><span class="hljs-meta">#<span class="hljs-keyword">else</span></span><br>  <span class="hljs-keyword">if</span> (isatty(<span class="hljs-number">2</span>) &amp;&amp; !getenv(<span class="hljs-string">&quot;CFL_QUIET&quot;</span>) ) &#123;<br>    PT(cCYA <span class="hljs-string">&quot;cfl-clang &quot;</span> cBRI VERSION  cRST <span class="hljs-string">&quot; by &lt;1539412714@qq.com&gt;\n&quot;</span>);<br>  &#125;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><br>  <span class="hljs-keyword">if</span> (argc &lt; <span class="hljs-number">2</span>) &#123;<br>    PT(<span class="hljs-string">&quot;\nerror:please use me just like the clang or clang++\n\n&quot;</span>);<br>    <span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>  &#125;<br>  find_obj(argv[<span class="hljs-number">0</span>]);<br>  edit_params(argc, argv);<br>  <span class="hljs-comment">/*</span><br><span class="hljs-comment">  int execvp(const char *file, char *const argv[]);</span><br><span class="hljs-comment">  file 是要执行的程序的名称。如果这个程序的名字包含了斜杠（/），execvp 会将它视为路径名。否则，会在环境变量 PATH 指定的目录中搜索这个程序。</span><br><span class="hljs-comment">  argv 是传递给要执行程序的参数的数组，这个数组必须以 NULL 指针结束。</span><br><span class="hljs-comment">  */</span><br>  execvp(cc_params[<span class="hljs-number">0</span>], (<span class="hljs-type">char</span>**)cc_params);<br><br>  FATAL(<span class="hljs-string">&quot;Oops, failed to execute &#x27;%s&#x27; - check your PATH&quot;</span>, cc_params[<span class="hljs-number">0</span>]);<br><br>  <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<h2 id="cfl-fuzz">cfl-fuzz</h2>
+<p>接下来是fuzz的主逻辑的相关代码，从main函数开始看</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* fuzz 主程序 */</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span>** argv)</span> &#123;<br><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">timeval</span> <span class="hljs-title">tv</span>;</span> <span class="hljs-comment">//存储时间信息</span><br><br>  fuzzer_res.child_pid = <span class="hljs-number">-1</span>;<br><br>  PT(cCYA <span class="hljs-string">&quot;cfl-fuzz &quot;</span> cBRI VERSION cRST <span class="hljs-string">&quot; by &lt;1539412714@qq.com&gt;\n&quot;</span>);<br><br>  gettimeofday(&amp;tv,<span class="hljs-literal">NULL</span>);<br>  srandom(tv.tv_sec ^ tv.tv_usec ^ getpid()); <span class="hljs-comment">// 设置随机数种子</span><br>  <br>  <span class="hljs-comment">//解析命令行参数 字符串无法使用 switch 故这里使用 if 且假设只会将程序的 path 输入到末尾</span><br>  num_options = Parse_command_line(argc,argv,cmd_options,cmd_values,program_argv,&amp;num_program_argv,target_program_path);<br><br>  <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; num_options; i++) &#123;<br>    <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">strcmp</span>(cmd_options[i], <span class="hljs-string">&quot;input&quot;</span>)) &#123;<br>      <span class="hljs-comment">// 释放旧的内存（如果有的话）</span><br>      <span class="hljs-built_in">free</span>(fuzzer_fd.in_dir);<br>      <span class="hljs-comment">// 为新的输入路径动态分配和复制内存</span><br>      fuzzer_fd.in_dir = strdup(cmd_values[i]);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">strcmp</span>(cmd_options[i], <span class="hljs-string">&quot;output&quot;</span>)) &#123;<br>      <span class="hljs-comment">// 释放旧的内存（如果有的话）</span><br>      <span class="hljs-built_in">free</span>(fuzzer_fd.out_dir);<br>      <span class="hljs-comment">// 为新的输出路径动态分配和复制内存</span><br>      fuzzer_fd.out_dir = strdup(cmd_values[i]);<br>    &#125;<br>  &#125;<br>  <br>  <span class="hljs-keyword">if</span> ((!fuzzer_fd.in_dir) || (!fuzzer_fd.out_dir)) Cmd_usage(argv[<span class="hljs-number">0</span>]);<br><br>  <span class="hljs-comment">//设置各种信号的处理程序</span><br>  setup_signal_handlers();<br><br>  <span class="hljs-comment">//初始化共享内存 将相应参数存入 fuzzer_fd 中</span><br>  setup_shm(&amp;fuzzer_res);<br>  <br>  <span class="hljs-comment">// 设置常用的文件标识符 如 /dev/null 并</span><br>  setup_dirs_fds(&amp;fuzzer_fd);<br>  <br>  <span class="hljs-comment">//读取 input 目录中的测试用例</span><br>  read_testcases();<br><br>  setup_pass_param_file(&amp;fuzzer_fd);<br><br>  init_forkserver();<br><br>  prev_run();<br><br>  fuzzer_count.start_time = get_cur_time();<br>  <span class="hljs-comment">//正式开始运行</span><br>  <span class="hljs-type">int</span> count = <span class="hljs-number">1</span>;<br>  <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br><br>    u8 skipped_fuzz;<br><br>    <span class="hljs-keyword">if</span> (!fuzzer_cur_msg.queue_cur) &#123;<br><br>      fuzzer_count.queue_cycle++;<br>      fuzzer_cur_msg.queue_cur = fuzzer_res.<span class="hljs-built_in">queue</span>;<br><br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        <span class="hljs-keyword">if</span>(fuzzer_cur_msg.queue_cur-&gt;next)&#123;<br>            fuzzer_cur_msg.queue_cur = fuzzer_cur_msg.queue_cur-&gt;next;<br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            fuzzer_cur_msg.queue_cur = fuzzer_res.<span class="hljs-built_in">queue</span>;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;all is tested done once&quot;</span>);<br>        &#125;<br><br>    &#125;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;zzzccc has try %d times\n&quot;</span>,count++);<br>    fuzz_test();<br>  &#125;<br><br>  <span class="hljs-comment">/* 程序结束了 等待 forksrv_pid 进程被杀死 */</span><br>  <span class="hljs-keyword">if</span> (waitpid(fuzzer_res.forksrv_pid, <span class="hljs-literal">NULL</span>, <span class="hljs-number">0</span>) &lt;= <span class="hljs-number">0</span>) &#123;<br>    WARNF(<span class="hljs-string">&quot;error waitpid\n&quot;</span>);<br>  &#125;<br><br>  write_bitmap(&amp;fuzzer_res,&amp;fuzzer_fd,&amp;(fuzzer_flag.bitmap_changed));<br>  destroy_queue(&amp;fuzzer_res);<br>  check_free(fuzzer_fd.target_path);<br>  <span class="hljs-built_in">free</span>(fuzzer_fd.in_dir);<br>  <span class="hljs-built_in">free</span>(fuzzer_fd.out_dir);<br>  OKF(<span class="hljs-string">&quot;We&#x27;re done here. Have a nice day!\n&quot;</span>);<br><br>  <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>PT即printf</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//通过定义或取消定义 MESSAGES_TO_STDOUT，开发者可以控制所有 PT 调用的输出位置，这对于调试或日志记录来说非常有用。</span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> MESSAGES_TO_STDOUT</span><br><span class="hljs-comment">//print to out</span><br><span class="hljs-meta">#  <span class="hljs-keyword">define</span> PT(x...)    printf(x)</span><br><span class="hljs-meta">#<span class="hljs-keyword">else</span> </span><br></code></pre></td></tr></table></figure>
+<p>首先是对命令行参数的解析</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//解析命令行参数 </span><br>num_options = Parse_command_line(argc,argv,cmd_options,cmd_values,program_argv,&amp;num_program_argv,target_program_path);<br></code></pre></td></tr></table></figure>
+<p>实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//解析命令行参数</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">Parse_command_line</span><span class="hljs-params">(<span class="hljs-type">int</span> argc,<span class="hljs-type">char</span> *argv[], <span class="hljs-type">char</span> *options[], <span class="hljs-type">char</span> *values[],<span class="hljs-type">char</span> **program_argv,<span class="hljs-type">int</span> *num_program_argv,<span class="hljs-type">char</span> *tagget_program_path)</span> &#123;<br>    <span class="hljs-type">int</span> i, num_options = <span class="hljs-number">0</span>;<br>    <span class="hljs-type">int</span> isthere_path = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">1</span>; i &lt; argc &amp;&amp; num_options &lt; MAX_ARGS; i++) &#123;<br>        <span class="hljs-keyword">if</span> (argv[i][<span class="hljs-number">0</span>] == <span class="hljs-string">&#x27;-&#x27;</span> &amp;&amp; argv[i][<span class="hljs-number">1</span>] != <span class="hljs-string">&#x27;-&#x27;</span>) &#123;<br>            <span class="hljs-keyword">if</span> (i + <span class="hljs-number">1</span> &lt; argc &amp;&amp; argv[i + <span class="hljs-number">1</span>][<span class="hljs-number">0</span>] != <span class="hljs-string">&#x27;-&#x27;</span>) &#123;<br>                options[num_options] = &amp;argv[i][<span class="hljs-number">1</span>];<br>                values[num_options++] = argv[i + <span class="hljs-number">1</span>];<br>                i++;<br>            &#125;<span class="hljs-keyword">else</span> &#123;<br>                options[num_options] = &amp;argv[i][<span class="hljs-number">1</span>];<br>                values[num_options++] = <span class="hljs-literal">NULL</span>;<br>            &#125;<br>        &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (argv[i][<span class="hljs-number">0</span>] == <span class="hljs-string">&#x27;-&#x27;</span> &amp;&amp; argv[i][<span class="hljs-number">1</span>] == <span class="hljs-string">&#x27;-&#x27;</span>) <br>        &#123;<br>            <span class="hljs-built_in">strcpy</span>(tagget_program_path,&amp;argv[i++][<span class="hljs-number">2</span>]);<br>            <span class="hljs-keyword">while</span>(i&lt;argc)&#123;<br>                program_argv[(*num_program_argv)++] = argv[i++];<br>            &#125;<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>        <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stderr</span>, <span class="hljs-string">&quot;Invalid argument: %s\n&quot;</span>, argv[i]);<br>            Cmd_usage(argv[<span class="hljs-number">0</span>]);<br>            <span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">if</span>(isthere_path)&#123;<br>        <span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stderr</span>, <span class="hljs-string">&quot;Please input your target program path with --&quot;</span>);<br>        Cmd_usage(argv[<span class="hljs-number">0</span>]);<br>    &#125;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">return</span> num_options;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>这里的解析逻辑比较乱且简陋，逻辑大概是将命令行可能传入的参数分为
+<code>-option value</code>,
+<code>-option</code>,<code>--dst</code>三种类型，并且这里假设待测程序
+path 只输入在末尾，且path之后的参数均为需要传入待测程序的参数</p>
+<p>接着这里保证存在input目录与output目录</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; num_options; i++) &#123;<br>  <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">strcmp</span>(cmd_options[i], <span class="hljs-string">&quot;input&quot;</span>)) &#123;<br>    <span class="hljs-comment">// 释放旧的内存（如果有的话）</span><br>    <span class="hljs-built_in">free</span>(fuzzer_fd.in_dir);<br>    <span class="hljs-comment">// 为新的输入路径动态分配和复制内存</span><br>    fuzzer_fd.in_dir = strdup(cmd_values[i]);<br>  &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">strcmp</span>(cmd_options[i], <span class="hljs-string">&quot;output&quot;</span>)) &#123;<br>    <span class="hljs-comment">// 释放旧的内存（如果有的话）</span><br>    <span class="hljs-built_in">free</span>(fuzzer_fd.out_dir);<br>    <span class="hljs-comment">// 为新的输出路径动态分配和复制内存</span><br>    fuzzer_fd.out_dir = strdup(cmd_values[i]);<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着设置相关信号的处理</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 设置信号处理 */</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">setup_signal_handlers</span><span class="hljs-params">(<span class="hljs-type">void</span>)</span><br>&#123;<br><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sigaction</span> <span class="hljs-title">sa</span>;</span><br><br>    sa.sa_handler = <span class="hljs-literal">NULL</span>;<br>    sa.sa_flags = SA_RESTART;<br>    sa.sa_sigaction = <span class="hljs-literal">NULL</span>;<br>    <span class="hljs-comment">// 在信号处理程序执行期间，不屏蔽任何额外的信号</span><br>    sigemptyset(&amp;sa.sa_mask);<br><br>    <span class="hljs-comment">/*设置 &quot;stop&quot; 信号的处理程序 */</span><br>    sa.sa_handler = handle_stop_sig;<br>    sigaction(SIGHUP, &amp;sa, <span class="hljs-literal">NULL</span>);<br>    sigaction(SIGINT, &amp;sa, <span class="hljs-literal">NULL</span>);<br>    sigaction(SIGTERM, &amp;sa, <span class="hljs-literal">NULL</span>);<br><br>    <span class="hljs-comment">/* 设置执行超时通知的信号处理程序 */</span><br>    sa.sa_handler = handle_timeout;<br>    sigaction(SIGALRM, &amp;sa, <span class="hljs-literal">NULL</span>);<br><br>    <span class="hljs-comment">/* 设置忽略某些信号 */</span><br>    sa.sa_handler = SIG_IGN;<br>    sigaction(SIGTSTP, &amp;sa, <span class="hljs-literal">NULL</span>);<br>    sigaction(SIGPIPE, &amp;sa, <span class="hljs-literal">NULL</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>处理分别如下，接受到stop命令就把 fork_server 进程 和子进程全杀了</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">handle_stop_sig</span><span class="hljs-params">(<span class="hljs-type">int</span> sig)</span><br>&#123;<br>    <span class="hljs-comment">// 把 fork_server 进程 和子进程全杀了</span><br>    fuzzer_flag.stop_soon = <span class="hljs-number">1</span>;<br><br>    <span class="hljs-keyword">if</span> (fuzzer_res.child_pid &gt; <span class="hljs-number">0</span>)<br>        kill(fuzzer_res.child_pid, SIGKILL);<br>    <span class="hljs-keyword">if</span> (fuzzer_res.forksrv_pid &gt; <span class="hljs-number">0</span>)<br>        kill(fuzzer_res.forksrv_pid, SIGKILL);<br><br>    <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>超时的话判断时子进程超时还是forksever进程超时，进行不同的杀</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 超时则杀死进程 注意杀的是 forkserver 还是子进程*/</span><br><span class="hljs-comment">/* 超时便会跳转到这里 */</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">handle_timeout</span><span class="hljs-params">(<span class="hljs-type">int</span> sig)</span><br>&#123;<br><br>    <span class="hljs-keyword">if</span> (fuzzer_res.child_pid &gt; <span class="hljs-number">0</span>)<br>    &#123;<br><br>        fuzzer_flag.child_timed_out = <span class="hljs-number">1</span>;<br>        kill(fuzzer_res.child_pid, SIGKILL);<br>    &#125;<br>    <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (fuzzer_res.child_pid == <span class="hljs-number">-1</span> &amp;&amp; fuzzer_res.forksrv_pid &gt; <span class="hljs-number">0</span>)<br>    &#123;<br><br>        fuzzer_flag.child_timed_out = <span class="hljs-number">1</span>;<br>        kill(fuzzer_res.forksrv_pid, SIGKILL);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着初始化共享内存</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 初始化共享内存 */</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">setup_shm</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> Fuzzer_resource *fuzzer_res)</span><br>&#123;<br><br>    u8 *shm_str;<br>    <span class="hljs-comment">// 是否加载了已存在的 bitmap 若没加载 则初始化 若已加载 则不初始化</span><br>    <span class="hljs-built_in">memset</span>(fuzzer_res-&gt;virgin_bits, <span class="hljs-number">0</span>, MAP_SIZE);<br>    <span class="hljs-comment">// 记录了超时未访问的</span><br>    <span class="hljs-built_in">memset</span>(fuzzer_res-&gt;virgin_tmout, <span class="hljs-number">0</span>, MAP_SIZE);<br>    <span class="hljs-comment">// 记录了错误未访问的</span><br>    <span class="hljs-built_in">memset</span>(fuzzer_res-&gt;virgin_crash, <span class="hljs-number">0</span>, MAP_SIZE);<br><br>    fuzzer_res-&gt;shm_id = shmget(IPC_PRIVATE, MAP_SIZE, IPC_CREAT | IPC_EXCL | <span class="hljs-number">0600</span>);<br><br>    <span class="hljs-keyword">if</span> (fuzzer_res-&gt;shm_id &lt; <span class="hljs-number">0</span>)<br>        PFATAL(<span class="hljs-string">&quot;shmget() failed&quot;</span>);<br><br>    shm_str = alloc_printf(<span class="hljs-string">&quot;%d&quot;</span>, fuzzer_res-&gt;shm_id);<br><br>    setenv(SHM_ENV_VAR, shm_str, <span class="hljs-number">1</span>);<br><br>    check_free(shm_str);<br><br>    fuzzer_res-&gt;trace_bits = shmat(fuzzer_res-&gt;shm_id, <span class="hljs-literal">NULL</span>, <span class="hljs-number">0</span>);<br><br>    <span class="hljs-keyword">if</span> (fuzzer_res-&gt;trace_bits == (<span class="hljs-type">void</span> *)<span class="hljs-number">-1</span>)<br>        PFATAL(<span class="hljs-string">&quot;shmat() failed&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着完成设置文件标识符，创建目录等工作</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 设置各个文件标识符 主要是创建输出目录 并设置常用的如/dev/null等目录 */</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">setup_dirs_fds</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> Fuzzer_fd *fuzzer_fd)</span><br>&#123;<br><br>  u8 *tmp;<br>  s32 fd;<br><br>  ACTF(<span class="hljs-string">&quot;Setting up output directories...&quot;</span>);<br>  <span class="hljs-keyword">if</span> (mkdir(fuzzer_fd-&gt;out_dir, <span class="hljs-number">0700</span>))<br>  &#123;<br>    <span class="hljs-keyword">if</span> (errno != EEXIST)<br>      PFATAL(<span class="hljs-string">&quot;Unable to create &#x27;%s&#x27;&quot;</span>, fuzzer_fd-&gt;out_dir);<br>  &#125;<br>  <span class="hljs-keyword">else</span><br>  &#123;<br>    fuzzer_fd-&gt;out_dir_fd = open(fuzzer_fd-&gt;out_dir, O_RDONLY);<br>  &#125;<br>  <span class="hljs-comment">/* 用于存储初始和发现的测试用例的队列目录。*/</span><br>  tmp = alloc_printf(<span class="hljs-string">&quot;%s/queue&quot;</span>, fuzzer_fd-&gt;out_dir);<br>  <span class="hljs-keyword">if</span> (mkdir(tmp, <span class="hljs-number">0700</span>))<br>      <span class="hljs-keyword">if</span> (errno != EEXIST)<br>        PT(<span class="hljs-string">&quot;Unable to create &#x27;%s&#x27;\n&quot;</span>, tmp);<br>  check_free(tmp);<br>  <span class="hljs-comment">/* 所有记录的崩溃。*/</span><br>  tmp = alloc_printf(<span class="hljs-string">&quot;%s/crashes&quot;</span>, fuzzer_fd-&gt;out_dir);<br>  <span class="hljs-keyword">if</span> (mkdir(tmp, <span class="hljs-number">0700</span>))<br>      <span class="hljs-keyword">if</span> (errno != EEXIST)<br>        PT(<span class="hljs-string">&quot;Unable to create &#x27;%s&#x27;\n&quot;</span>, tmp);<br>  check_free(tmp);<br> <span class="hljs-comment">/* 记录所有的超时*/</span><br> tmp = alloc_printf(<span class="hljs-string">&quot;%s/timed_outs&quot;</span>, fuzzer_fd-&gt;out_dir);<br> <span class="hljs-keyword">if</span> (mkdir(tmp, <span class="hljs-number">0700</span>))<br>    PT(<span class="hljs-string">&quot;Already exist . Unable to create &#x27;%s&#x27;\n&quot;</span>, tmp);<br> check_free(tmp);<br><br>  <span class="hljs-comment">/* 一些有用的文件描述符。*/</span><br>  fuzzer_fd-&gt;dev_null_fd = open(<span class="hljs-string">&quot;/dev/null&quot;</span>, O_RDWR);<br>  <span class="hljs-keyword">if</span> (fuzzer_fd-&gt;dev_null_fd &lt; <span class="hljs-number">0</span>)<br>    PFATAL(<span class="hljs-string">&quot;Unable to open /dev/null&quot;</span>);<br><br>  fuzzer_fd-&gt;dev_urandom_fd = open(<span class="hljs-string">&quot;/dev/urandom&quot;</span>, O_RDONLY);<br>  <span class="hljs-keyword">if</span> (fuzzer_fd-&gt;dev_urandom_fd &lt; <span class="hljs-number">0</span>)<br>    PFATAL(<span class="hljs-string">&quot;Unable to open /dev/urandom&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着读取测试用例</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 从文件中读取测试用例 初始化时调用 这里暂时是直接用全局变量*/</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">read_testcases</span><span class="hljs-params">( <span class="hljs-type">void</span> )</span> &#123;<br><br>  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">dirent</span> **<span class="hljs-title">nl</span>;</span><br>  s32 nl_cnt;<br>  u32 i;<br>  u8* fn;<br>  <span class="hljs-comment">/* Auto-detect non-in-place resumption attempts. */</span><br>  fn = alloc_printf(<span class="hljs-string">&quot;%s/queue&quot;</span>, fuzzer_fd.in_dir);<br>  <span class="hljs-keyword">if</span> (!access(fn, F_OK)) fuzzer_fd.in_dir = fn; <span class="hljs-keyword">else</span> check_free(fn);<br>  ACTF(<span class="hljs-string">&quot;Scanning &#x27;%s&#x27;...&quot;</span>, fuzzer_fd.in_dir);<br>  <span class="hljs-comment">/* 函数使用 scandir 函数扫描输入目录 in_dir 中的文件，并使用 alphasort 函数对文件名进行排序 */</span><br>  nl_cnt = scandir(fuzzer_fd.in_dir, &amp;nl, filter, alphasort);<br>  <span class="hljs-keyword">if</span> (nl_cnt &lt; <span class="hljs-number">0</span>) &#123;<br>    PFATAL(<span class="hljs-string">&quot;Unable to open &#x27;%s&#x27;&quot;</span>, fuzzer_fd.in_dir);<br>  &#125;<br>  <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; nl_cnt; i++) &#123;<br>    <span class="hljs-comment">//stat 用于存储文件信息</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">stat</span> <span class="hljs-title">st</span>;</span><br>    u8* fn = alloc_printf(<span class="hljs-string">&quot;%s/%s&quot;</span>, fuzzer_fd.in_dir, nl[i]-&gt;d_name);<br>    <span class="hljs-keyword">if</span> (lstat(fn, &amp;st) || access(fn, R_OK))<br>      PFATAL(<span class="hljs-string">&quot;Unable to access &#x27;%s&#x27;&quot;</span>, fn);<br>    <span class="hljs-comment">//是否是常规文件 文件大小是否为 0</span><br>    <span class="hljs-keyword">if</span> (!st.st_size) &#123;<br>      check_free(fn);<br>      <span class="hljs-keyword">continue</span>;<br>    &#125;<br>    add_to_queue(fn, st.st_size);<br>  &#125;<br>  <span class="hljs-built_in">free</span>(nl); <span class="hljs-comment">/* not tracked */</span><br>  <span class="hljs-comment">// add_to_queue 应该会将现有的队列的数目添加 若还是为 0 说明要么不存在符合条件的文件要么初始化失败</span><br>  <span class="hljs-keyword">if</span> (!fuzzer_cur_msg.queue_length) &#123;<br>    FATAL(<span class="hljs-string">&quot;Read_testcases Fail in &#x27;%s&#x27;&quot;</span>, fuzzer_fd.in_dir);<br>  &#125;<br>  fuzzer_cur_msg.queued_at_start = fuzzer_cur_msg.queue_length;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着设置要传递给程序的参数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 设置用于传参的 ./cur_input 获取相应的文件标识符 */</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">setup_pass_param_file</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> Fuzzer_fd *fuzzer_fd)</span> &#123;<br><br>  u8 * fn = alloc_printf(<span class="hljs-string">&quot;%s/.cur_input&quot;</span>, fuzzer_fd-&gt;out_dir);<br>  <span class="hljs-comment">//如果存在先删除</span><br>  unlink(fn); <span class="hljs-comment">/* Ignore errors */</span><br><br>  fuzzer_fd-&gt;cur_input = open(fn, O_RDWR | O_CREAT | O_EXCL, <span class="hljs-number">0600</span>);<br><br>  <span class="hljs-keyword">if</span> (fuzzer_fd-&gt;cur_input &lt; <span class="hljs-number">0</span>) PFATAL(<span class="hljs-string">&quot;Unable to create &#x27;%s&#x27;&quot;</span>, fn);<br><br>  check_free(fn);<br><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着完成forksever的启动</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// forkserver 初始化</span><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">init_forkserver</span><span class="hljs-params">()</span><br>&#123;<br><br>    <span class="hljs-type">static</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">itimerval</span> <span class="hljs-title">timer</span>;</span><br>    <span class="hljs-comment">// state 管道用于从 forkserver 向 fuzzer 发送 control 则相反</span><br>    <span class="hljs-type">int</span> state_pipe[<span class="hljs-number">2</span>], control_pipe[<span class="hljs-number">2</span>];<br>    <span class="hljs-type">int</span> status;<br>    s32 rlen;<br><br>    PT(<span class="hljs-string">&quot;tring to start the fork server...&quot;</span>);<br><br>    <span class="hljs-keyword">if</span> (pipe(state_pipe) || pipe(control_pipe))<br>        PFATAL(<span class="hljs-string">&quot;pipe() failed&quot;</span>);<br><br>    fuzzer_res.forksrv_pid = fork();<br><br>    <span class="hljs-keyword">if</span> (fuzzer_res.forksrv_pid &lt; <span class="hljs-number">0</span>)<br>        PFATAL(<span class="hljs-string">&quot;fork() failed&quot;</span>);<br><br>    <span class="hljs-comment">// forkserver 进程中</span><br>    <span class="hljs-keyword">if</span> (fuzzer_res.forksrv_pid == <span class="hljs-number">0</span>)<br>    &#123;<br>        setsid();<br>        dup2(fuzzer_fd.dev_null_fd, <span class="hljs-number">1</span>);<br>        dup2(fuzzer_fd.dev_null_fd, <span class="hljs-number">2</span>);<br><br>        <span class="hljs-keyword">if</span> (dup2(fuzzer_fd.cur_input, <span class="hljs-number">0</span>) == <span class="hljs-number">-1</span>) &#123;<br>            perror(<span class="hljs-string">&quot;dup2&quot;</span>);<br>            _exit(EXIT_FAILURE);<br>        &#125;<br>        close(fuzzer_fd.cur_input);<br><br><br>        <span class="hljs-comment">// dup2 函数将后一个参数的文件描述符重定向到前一个参数</span><br>        <span class="hljs-keyword">if</span> (dup2(control_pipe[<span class="hljs-number">0</span>], FORKSRV_FD) &lt; <span class="hljs-number">0</span>)<br>            PFATAL(<span class="hljs-string">&quot;dup2() failed&quot;</span>);<br>        <span class="hljs-keyword">if</span> (dup2(state_pipe[<span class="hljs-number">1</span>], FORKSRV_FD + <span class="hljs-number">1</span>) &lt; <span class="hljs-number">0</span>)<br>            PFATAL(<span class="hljs-string">&quot;dup2() failed&quot;</span>);<br>        <span class="hljs-comment">// 关闭不需要的文件描述符</span><br>        close(control_pipe[<span class="hljs-number">0</span>]);<br>        close(control_pipe[<span class="hljs-number">1</span>]);<br>        close(state_pipe[<span class="hljs-number">0</span>]);<br>        close(state_pipe[<span class="hljs-number">1</span>]);<br><br>        close(fuzzer_fd.dev_null_fd);<br>        close(fuzzer_fd.dev_urandom_fd);<br><br>        execv(target_program_path, program_argv);<br><br>        <span class="hljs-comment">// EXEC_FAIL_SIG 是一个预定义的常量，表示 execv() 函数执行失败的特殊签名值。</span><br>        *(u32 *)(fuzzer_res.trace_bits) = EXEC_FAIL_SIG;<br>        <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);<br>    &#125;<br>    <span class="hljs-comment">// forkserver 进程结束</span><br>    <span class="hljs-comment">// 以下为父进程</span><br>    close(control_pipe[<span class="hljs-number">0</span>]);<br>    close(state_pipe[<span class="hljs-number">1</span>]);<br><br>    fuzzer_fd.forkserv_control_fd = control_pipe[<span class="hljs-number">1</span>];<br>    fuzzer_fd.forkserv_state_fd = state_pipe[<span class="hljs-number">0</span>];<br><br>    <span class="hljs-comment">/* Wait for the fork server to come up, but don&#x27;t wait too long. */</span><br><br>    timer.it_value.tv_sec = ((exec_tmout * FORK_WAIT_MULT) / <span class="hljs-number">1000</span>);<br>    timer.it_value.tv_usec = ((exec_tmout * FORK_WAIT_MULT) % <span class="hljs-number">1000</span>) * <span class="hljs-number">1000</span>;<br>    <span class="hljs-comment">// setitimer 是一个 C 语言的标准库函数，用于设置和控制进程的定时器</span><br>    setitimer(ITIMER_REAL, &amp;timer, <span class="hljs-literal">NULL</span>);<br>    <span class="hljs-comment">// 父子进程握手</span><br>    rlen = read(fuzzer_fd.forkserv_state_fd, &amp;status, <span class="hljs-number">4</span>);<br><br>    timer.it_value.tv_sec = <span class="hljs-number">0</span>;<br>    timer.it_value.tv_usec = <span class="hljs-number">0</span>;<br><br>    setitimer(ITIMER_REAL, &amp;timer, <span class="hljs-literal">NULL</span>);<br>    <span class="hljs-comment">// 长度为 4 则握手成功 这里是正常的 父进程即 fuzz 进程直接退出函数了继续运行了</span><br>    <span class="hljs-keyword">if</span> (rlen == <span class="hljs-number">4</span>)<br>    &#123;<br>        OKF(<span class="hljs-string">&quot;All right - fork server is up.&quot;</span>);<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> (fuzzer_flag.child_timed_out)<br>        FATAL(<span class="hljs-string">&quot;Timeout while initializing fork server (adjusting -t may help)&quot;</span>);<br><br>    <span class="hljs-keyword">if</span> (waitpid(fuzzer_res.forksrv_pid, &amp;status, <span class="hljs-number">0</span>) &lt;= <span class="hljs-number">0</span>)<br>        PFATAL(<span class="hljs-string">&quot;waitpid() failed&quot;</span>);<br><br>    <span class="hljs-keyword">if</span> (WIFSIGNALED(status))<br>    &#123;<br>        FATAL(<span class="hljs-string">&quot;Fork server crashed with signal %d&quot;</span>, WTERMSIG(status));<br>    &#125;<br>    <span class="hljs-comment">//标志着 forkserver 的结束</span><br>    <span class="hljs-keyword">if</span> (*(u32 *)fuzzer_res.trace_bits == EXEC_FAIL_SIG)<br>        FATAL(<span class="hljs-string">&quot;Unable to execute target application&quot;</span>);<br><br>    FATAL(<span class="hljs-string">&quot;Fork server handshake failed&quot;</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在正式运行之前先进行一轮的运行来初始化覆盖位图等数据方便后续的变异</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">prev_run</span><span class="hljs-params">()</span>&#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">queue_entry</span> *<span class="hljs-title">current_queue</span> =</span> fuzzer_res.<span class="hljs-built_in">queue</span>; <span class="hljs-comment">// 从队列头部开始</span><br><br>    <span class="hljs-comment">// 遍历队列中的每个元素</span><br>    <span class="hljs-keyword">while</span> (current_queue != <span class="hljs-literal">NULL</span>) &#123;<br>        <span class="hljs-comment">// 运行当前的测试用例</span><br>        s32 len, fd;<br>        u8  *in_buf;<br><br>        fd = open(current_queue-&gt;fname, O_RDONLY);<br>        <span class="hljs-keyword">if</span> (fd &lt; <span class="hljs-number">0</span>) PFATAL(<span class="hljs-string">&quot;Fail in fuzz_test. Unable to open &#x27;%s&#x27;&quot;</span>, current_queue-&gt;fname);<br>        len = current_queue-&gt;len;<br><br>        <span class="hljs-comment">//将文件内容映射到内存中</span><br>        in_buf = mmap(<span class="hljs-number">0</span>, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, <span class="hljs-number">0</span>);<br>        <span class="hljs-keyword">if</span> (in_buf == MAP_FAILED) PFATAL(<span class="hljs-string">&quot;Fail in fuzz_test Unable to mmap &#x27;%s&#x27;&quot;</span>, current_queue-&gt;fname);<br>        close(fd);<br><br>        write_to_testcase(in_buf, len, &amp;fuzzer_fd);<br>        u8 fault = run_target(exec_tmout);<br><br>        <span class="hljs-comment">// 根据运行的结果处理</span><br>        <span class="hljs-keyword">if</span> (fault == FAULT_CRASH) &#123;<br>            current_queue-&gt;is_crash = <span class="hljs-number">1</span>;<br>            write_to_crash(in_buf,len,&amp;fuzzer_fd,&amp;fuzzer_cur_msg);<br>        &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (fault == FAULT_TMOUT) &#123;<br>            current_queue-&gt;timeout_times += <span class="hljs-number">1</span>;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">// 检查是否有新的覆盖范围</span><br>            <span class="hljs-type">int</span> new_bits_level = check_new_bits(fuzzer_res.virgin_bits);<br>            <span class="hljs-keyword">if</span> (new_bits_level) &#123;<br>                current_queue-&gt;has_new_coverage = <span class="hljs-number">1</span>;<br>            &#125;<br>            <span class="hljs-type">int</span> result = munmap(in_buf, len);<br>            <span class="hljs-keyword">if</span> (result != <span class="hljs-number">0</span>) &#123;<br>                <span class="hljs-comment">// munmap 函数调用失败，可以检查 errno 来获取错误信息</span><br>                perror(<span class="hljs-string">&quot;munmap failed&quot;</span>);<br>            &#125;<br>        &#125;<br>        <span class="hljs-comment">// 移动到下一个队列项</span><br>        current_queue = current_queue-&gt;next;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>run_target</code>函数实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 执行程序 监视是否超时 返回状态信息 并更新 trace_bits[] */</span><br><span class="hljs-type">static</span> u8 <span class="hljs-title function_">run_target</span><span class="hljs-params">(u32 timeout)</span><br>&#123;<br><br>    <span class="hljs-type">static</span> <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">itimerval</span> <span class="hljs-title">it</span>;</span><br>    <span class="hljs-type">static</span> u32 prev_timed_out = <span class="hljs-number">0</span>;<br>    <span class="hljs-type">static</span> u64 exec_ms = <span class="hljs-number">0</span>;<br>    <span class="hljs-type">int</span> status = <span class="hljs-number">0</span>;<br>    fuzzer_flag.child_timed_out = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">// shm 写零</span><br>    <span class="hljs-built_in">memset</span>(fuzzer_res.trace_bits, <span class="hljs-number">0</span>, MAP_SIZE);<br>    MEM_BARRIER();<br><br>    s32 res;<br><br>    <span class="hljs-comment">// 要求 fork server 启动 child</span><br>    <span class="hljs-keyword">if</span> ((res = write(fuzzer_fd.forkserv_control_fd, &amp;prev_timed_out, <span class="hljs-number">4</span>)) != <span class="hljs-number">4</span>)<br>    &#123;<br>        RPFATAL(res, <span class="hljs-string">&quot;Unable to request new process from fork server (OOM?)&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">// 从 fork server 读 child pid</span><br>    <span class="hljs-keyword">if</span> ((res = read(fuzzer_fd.forkserv_state_fd, &amp;fuzzer_res.child_pid, <span class="hljs-number">4</span>)) != <span class="hljs-number">4</span>)<br>    &#123;<br>        RPFATAL(res, <span class="hljs-string">&quot;Unable to request new process from fork server (OOM?)&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> (fuzzer_res.child_pid &lt;= <span class="hljs-number">0</span>)<br>        FATAL(<span class="hljs-string">&quot;Fork server is fial&quot;</span>);<br><br>    <span class="hljs-comment">/* 根据用户的请求配置超时，然后等待子进程终止。*/</span><br><br>    it.it_value.tv_sec = (timeout / <span class="hljs-number">1000</span>);<br>    it.it_value.tv_usec = (timeout % <span class="hljs-number">1000</span>) * <span class="hljs-number">1000</span>;<br><br>    <span class="hljs-comment">// 设置定时器，若超时，到期时发送 SIGALRM 信号</span><br>    setitimer(ITIMER_REAL, &amp;it, <span class="hljs-literal">NULL</span>);<br><br>    <span class="hljs-comment">/* SIGALRM 处理程序只是杀死 child_pid 并设置 child_timed_out。*/</span><br>    <span class="hljs-comment">// 从 forkserv_state_fd 读取 child 退出原因</span><br>    <span class="hljs-keyword">if</span> ((res = read(fuzzer_fd.forkserv_state_fd, &amp;status, <span class="hljs-number">4</span>)) != <span class="hljs-number">4</span>)<br>    &#123;<br>        RPFATAL(res, <span class="hljs-string">&quot;Unable to communicate with fork server&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> (!WIFSTOPPED(status))<br>        fuzzer_res.child_pid = <span class="hljs-number">0</span>;<br><br>    <span class="hljs-comment">// 计算 child 运行耗时</span><br>    getitimer(ITIMER_REAL, &amp;it);<br>    exec_ms = (u64)timeout - (it.it_value.tv_sec * <span class="hljs-number">1000</span> +<br>                              it.it_value.tv_usec / <span class="hljs-number">1000</span>);<br><br>    <span class="hljs-comment">// 取消定时器</span><br>    it.it_value.tv_sec = <span class="hljs-number">0</span>;<br>    it.it_value.tv_usec = <span class="hljs-number">0</span>;<br><br>    setitimer(ITIMER_REAL, &amp;it, <span class="hljs-literal">NULL</span>);<br><br>    fuzzer_count.total_execs++;<br><br>    MEM_BARRIER();<br>    <span class="hljs-comment">// shm 分桶 分桶这个思想确实 不错 借鉴</span><br>    classify_counts(fuzzer_res.trace_bits);<br>    <span class="hljs-comment">/* 向调用者报告结果。*/</span><br><br>    <span class="hljs-comment">// 若 child 是非正常结束的</span><br>    <span class="hljs-keyword">if</span> (WIFSIGNALED(status))<br>    &#123;<br>        fuzzer_flag.kill_signal = WTERMSIG(status);<br><br>        <span class="hljs-comment">// 如果是被 SIGKILL 结束的，说明超时</span><br>        <span class="hljs-keyword">if</span> (fuzzer_flag.child_timed_out &amp;&amp; fuzzer_flag.kill_signal == SIGKILL)&#123;<br>            <span class="hljs-keyword">return</span> FAULT_TMOUT;<br>        &#125;<br>        <span class="hljs-comment">// 其他原因退出，说明 crash</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;crashes happened, signal %d\n&quot;</span>, WTERMSIG(status));<br>        <span class="hljs-keyword">return</span> FAULT_CRASH;<br>    &#125;<br>    <span class="hljs-comment">//否则返回 NONE 状态 即正常运行 并未发生啥</span><br>    <span class="hljs-keyword">return</span> FAULT_NONE;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>接着是主循环</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//正式开始运行</span><br><span class="hljs-type">int</span> count = <span class="hljs-number">1</span>;<br><span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br><br>  u8 skipped_fuzz;<br><br>  <span class="hljs-keyword">if</span> (!fuzzer_cur_msg.queue_cur) &#123;<br><br>    fuzzer_count.queue_cycle++;<br>    fuzzer_cur_msg.queue_cur = fuzzer_res.<span class="hljs-built_in">queue</span>;<br><br>  &#125;<span class="hljs-keyword">else</span>&#123;<br>      <span class="hljs-keyword">if</span>(fuzzer_cur_msg.queue_cur-&gt;next)&#123;<br>          fuzzer_cur_msg.queue_cur = fuzzer_cur_msg.queue_cur-&gt;next;<br>      &#125;<span class="hljs-keyword">else</span>&#123;<br>          fuzzer_cur_msg.queue_cur = fuzzer_res.<span class="hljs-built_in">queue</span>;<br>          <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;all is tested done once&quot;</span>);<br>      &#125;<br><br>  &#125;<br>  <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;zzzccc has try %d times\n&quot;</span>,count++);<br>  fuzz_test();<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>fuzz_test实现如下，思路就是参考 AFL 的选择思想 但是这里直接取队列中的
+favored 进行测试并根据其成绩进行变异</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//这里时利用重定向输入参数 在 forkserver 时完成了子进程的重定向</span><br><span class="hljs-type">void</span> <span class="hljs-title function_">fuzz_test</span><span class="hljs-params">()</span>&#123;<br>    s32 len, fd;<br>    u8  *in_buf, *testcase_buf;<br><br>    fd = open(fuzzer_cur_msg.queue_cur-&gt;fname, O_RDONLY);<br>    <span class="hljs-keyword">if</span> (fd &lt; <span class="hljs-number">0</span>) PFATAL(<span class="hljs-string">&quot;Fail in fuzz_test. Unable to open &#x27;%s&#x27;&quot;</span>, fuzzer_cur_msg.queue_cur-&gt;fname);<br>    len = fuzzer_cur_msg.queue_cur-&gt;len;<br><br>    <span class="hljs-comment">//将文件内容映射到内存中</span><br>    in_buf = mmap(<span class="hljs-number">0</span>, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, <span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">if</span> (in_buf == MAP_FAILED) PFATAL(<span class="hljs-string">&quot;Fail in fuzz_test Unable to mmap &#x27;%s&#x27;&quot;</span>, fuzzer_cur_msg.queue_cur-&gt;fname);<br>    close(fd);<br><br>    <span class="hljs-keyword">if</span>(fuzzer_cur_msg.queue_cur-&gt;timeout_times)&#123;<br>        <span class="hljs-comment">//释放内存并跳过</span><br>        <span class="hljs-type">int</span> result = munmap(in_buf, len);<br>        <span class="hljs-keyword">if</span> (result != <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">// munmap 函数调用失败，可以检查 errno 来获取错误信息</span><br>            perror(<span class="hljs-string">&quot;munmap failed&quot;</span>);<br>        &#125;<br>    &#125;<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (fuzzer_cur_msg.queue_cur-&gt;is_crash) &#123;<br>        crash_mutation(in_buf,len);<br>        fuzzer_cur_msg.queue_cur-&gt;was_fuzzed = <span class="hljs-number">1</span>;<br>        <span class="hljs-comment">//释放内存并跳过</span><br>        <span class="hljs-type">int</span> result = munmap(in_buf, len);<br>        <span class="hljs-keyword">if</span> (result != <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">// munmap 函数调用失败，可以检查 errno 来获取错误信息</span><br>            perror(<span class="hljs-string">&quot;munmap failed&quot;</span>);<br>        &#125;<br>    &#125;<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (fuzzer_cur_msg.queue_cur-&gt;has_new_coverage)&#123;<br>        new_coverage_mutation(in_buf,len);<br>        fuzzer_cur_msg.queue_cur-&gt;was_fuzzed = <span class="hljs-number">1</span>;<br>        <span class="hljs-comment">//释放内存并跳过</span><br>        <span class="hljs-type">int</span> result = munmap(in_buf, len);<br>        <span class="hljs-keyword">if</span> (result != <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">// munmap 函数调用失败，可以检查 errno 来获取错误信息</span><br>            perror(<span class="hljs-string">&quot;munmap failed&quot;</span>);<br>        &#125;<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        apply_major_mutation(in_buf,len);<br>        <span class="hljs-type">int</span> result = munmap(in_buf, len);<br>        <span class="hljs-keyword">if</span> (result != <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">// munmap 函数调用失败，可以检查 errno 来获取错误信息</span><br>            perror(<span class="hljs-string">&quot;munmap failed&quot;</span>);<br>        &#125;<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>这里对不同的情况设置了不同的变异策略，超时开摆，crash则调用<code>crash_mutation</code>，覆盖位图更新则调用<code>new_coverage_mutation</code>，啥也没发生则调用<code>apply_major_mutation</code></p>
+<p>在变异中均会对数据采取<code>calibrate</code>，将有价值的测试用例保存下来</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">//这里对常规的 也就是尚未添加进入队列的数据进行的测试</span><br><span class="hljs-type">static</span> u8 <span class="hljs-title function_">calibrate</span><span class="hljs-params">(<span class="hljs-type">void</span>* mem,u32 len)</span>&#123;<br>    u8 *fn;<br>    u32 fd;<br>    write_to_testcase(mem, len,&amp;fuzzer_fd);<br>    u8 fault = run_target(exec_tmout);<br>    <span class="hljs-keyword">if</span>(fault == FAULT_TMOUT)&#123;<br>        fuzzer_cur_msg.queue_cur-&gt;timeout_times += <span class="hljs-number">1</span>;<br>        write_to_timeout(mem,len,&amp;fuzzer_fd,&amp;fuzzer_cur_msg);<br>    &#125;<span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (fault == FAULT_CRASH) &#123;<br>        fn = alloc_printf(<span class="hljs-string">&quot;%s/queue/id_%06u&quot;</span>, fuzzer_fd.out_dir, fuzzer_cur_msg.queue_length);<br>        fd = open(fn, O_RDWR | O_CREAT | O_EXCL, <span class="hljs-number">0600</span>);<br>        write(fd, mem, len);<br>        <span class="hljs-comment">//将文件指针指回文件开头</span><br>        lseek(fd,<span class="hljs-number">0</span>, SEEK_SET);<br>        fuzzer_cur_msg.total_crashes += <span class="hljs-number">1</span>;<br>        add_to_queue(fn,len);<br>        fuzzer_res.queue_top-&gt;is_crash = <span class="hljs-number">1</span>;<br>        fuzzer_res.queue_top-&gt;len = len;<br>        write_to_crash(mem,len,&amp;fuzzer_fd,&amp;fuzzer_cur_msg);<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        <span class="hljs-comment">// 0 是没有 1 是已知路径数量增加 2 是找到新的路径</span><br>        <span class="hljs-type">int</span> new_bits_level = check_new_bits(fuzzer_res.virgin_bits);<br>        <span class="hljs-keyword">if</span>(new_bits_level)&#123;<br>            fn = alloc_printf(<span class="hljs-string">&quot;%s/queue/id_%06u&quot;</span>, fuzzer_fd.out_dir, fuzzer_cur_msg.queue_length);<br>            fd = open(fn, O_RDWR | O_CREAT | O_EXCL, <span class="hljs-number">0600</span>);<br>            write(fd, mem, len);<br>            <span class="hljs-comment">//将文件指针指回文件开头</span><br>            lseek(fd,<span class="hljs-number">0</span>, SEEK_SET);<br>            add_to_queue(fn,len);<br>            fuzzer_res.queue_top-&gt;has_new_coverage = <span class="hljs-number">1</span>;<br>            fuzzer_res.queue_top-&gt;len = len;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>而在对覆盖位图是否更新的判断上，参考了AFL中的方法，即并不是有变化就认定为更新，而是分支执行次数就会有一个简单的归类。例如，如果对某个测试用例处理时，分支A执行了32次；对另外一个测试用例，分支A执行了33次，那么AFL就会认为这两次的代码覆盖是相同的。当然，这样的简单分类肯定不能区分所有的情况，不过在某种程度上，处理了一些因为循环次数的微小区别，而误判为不同执行结果的情况。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* 返回 1: 表示仅有某个特定元组的命中计数发生了变化。</span><br><span class="hljs-comment">返回 2: 表示发现了新的元组。</span><br><span class="hljs-comment">返回 0: 表示没有新的变化。 */</span><br><span class="hljs-comment">/* 这里自己写了个比较简单的 有空可以再康康 afl 的学习下如何优化 */</span><br><span class="hljs-type">int</span> <span class="hljs-type">static</span> <span class="hljs-title function_">check_new_bits</span><span class="hljs-params">(u8* virgin_map)</span>&#123;<br>  u8* current = fuzzer_res.trace_bits;<br>  u8* virgin = virgin_map;<br>  classify_counts((u64 *)fuzzer_res.trace_bits);<br>  u8 ret = <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">for</span> (u32 i = <span class="hljs-number">0</span>; i &lt; MAP_SIZE; i++) &#123;<br>        <span class="hljs-keyword">if</span> (current[i]) &#123;<br>            <span class="hljs-keyword">if</span> (!virgin[i]) &#123;<br>                ret = <span class="hljs-number">1</span>;<br>                virgin[i] = current[i];<br>            &#125;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> ret;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>classify_counts</code>实现</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-keyword">inline</span> <span class="hljs-type">void</span> <span class="hljs-title function_">classify_counts</span><span class="hljs-params">(u8* mem)</span> &#123;<br>  u64 i = MAP_SIZE;<br>  <span class="hljs-keyword">while</span> (i--) &#123;<br>    <span class="hljs-keyword">if</span> (unlikely(*mem)) &#123;<br>      (*mem) = count_class_lookup8[*(mem)];<br>    &#125;<br>    mem++;<br>  &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="mutate">Mutate</h2>
+<p>三个变异方式具体如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">crash_mutation</span><span class="hljs-params">(<span class="hljs-type">void</span> *mem,u32 len)</span>&#123;<br>    u8 *tmp;<br>    tmp = check_alloc_nozero(len);<br>    <span class="hljs-built_in">memcpy</span>(tmp, mem, len);<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>;j&lt;<span class="hljs-number">3</span>;j++)&#123;<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i =<span class="hljs-number">0</span> ;i&lt;<span class="hljs-number">10</span>;i++)&#123;<br>            magic_numbers(tmp,len,MAGIC_NUMBERS,MAGIC_NUMBERS_COUNT);<br>        &#125;<br>        calibrate(tmp,len);<br>    &#125;<br>    check_free(tmp);<br>&#125;<br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">new_coverage_mutation</span><span class="hljs-params">(<span class="hljs-type">void</span> *mem,u32 len)</span>&#123;<br>    u8 *tmp;<br>    tmp = check_alloc_nozero(len);<br>    <span class="hljs-built_in">memcpy</span>(tmp, mem, len);<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>;j&lt;<span class="hljs-number">20</span>;j++)&#123;<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i =<span class="hljs-number">0</span> ;i&lt; <span class="hljs-number">10</span>;i++)&#123;<br>            bit_flipping(tmp,len);<br>            magic_numbers(tmp,len,MAGIC_NUMBERS,MAGIC_NUMBERS_COUNT);<br>        &#125;<br>        calibrate(tmp,len);<br>    &#125;<br>    check_free(tmp);<br>&#125;<br><br><span class="hljs-type">static</span> <span class="hljs-type">void</span> <span class="hljs-title function_">apply_major_mutation</span><span class="hljs-params">(<span class="hljs-type">void</span> *mem,u32 len)</span>&#123;<br>    u8 *tmp;<br>    tmp = check_alloc_nozero(len);<br>    u32 len_tmp = len;<br>    <span class="hljs-built_in">memcpy</span>(tmp, mem, len);<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>;j &lt; <span class="hljs-number">50</span>;j++)&#123;<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i =<span class="hljs-number">0</span> ;i&lt; <span class="hljs-number">10</span>;i++)&#123;<br>            <span class="hljs-comment">//insert_delete_mutation(&amp;tmp,&amp;len_tmp);</span><br>            random_mutation(tmp,len);<br>            magic_numbers(tmp,len,MAGIC_NUMBERS,MAGIC_NUMBERS_COUNT);<br>        &#125;<br>        calibrate(tmp,len);<br>    &#125;<br>    check_free(tmp);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>还非常的简单，后续需要改进</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/IDONKONW/" class="print-no-link">#IDONKONW</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>CFL:从零开始实现一个简单的模糊测试工具</div>
+      <div>http://yghde.cc/2024/05/30/CFL-从零开始实现一个简单的模糊测试工具/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>cc&yg</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年5月30日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/20/%E5%B8%B8%E8%A7%81%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E6%80%BB%E7%BB%93/" title="常见加密算法总结">
+                        <span class="hidden-mobile">常见加密算法总结</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"AwATvI9ZA8LoLCByT7WpHEdF-gzGzoHsz","appKey":"sXn32uhs07PXe9VAlgypzUYp","path":"window.location.pathname","placeholder":null,"avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
